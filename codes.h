@@ -1,67 +1,70 @@
 #ifndef CODES_H
 #define CODES_H
 
-/* terminal operations */
-/* non f versions write to stdout */
-/* return code is that returned by the f versions */
-int term_clear();
-/* same as above but the file descriptor to write to can be specified */
-/* return code is that returned by write */
-int fterm_clear(int fd);
+/* All functions come in two forms
+ * non f forms write to stdout and will return the result of the equiv f form
+ * f forms are the same as the non f forms except that you must specify a file descriptor to write to
+ * in both cases, the return code is that returned by write(3)
+*/
 
+/** Terminal operations **/
+typedef struct termios tstate;
+/* get current state */
+tstate t_getstate();
+tstate ft_getstate();
+/* set state */
+int t_setstate(tstate state);
+int ft_setsate(int fd, tstate state);
+/* send clear code */
+int t_clear();
+int ft_clear(int fd);
 
-/* text operations, change colour/style of text following it */
-/* non f versions write to standard out */
-/* return code is that returned by the f versions */
-int text_default();
-int text_bright();
-int text_red();
-int text_green();
-int text_yellow();
-int text_blue();
-int text_magenta();
-int text_white();
-int text_black();
-int text_cyan();
-int text_bold(); /* synonym for bright */
-int text_underline();
-/* same as above but the file descriptor to write to can be specified */
-/* return code is that returned by write */
-int ftext_default(int fd);
-int ftext_bright(int fd);
-int ftext_red(int fd);
-int ftext_green(int fd);
-int ftext_yellow(int fd);
-int ftext_blue(int fd);
-int ftext_magenta(int fd);
-int ftext_cyan(int fd);
-int ftext_white(int fd);
-int ftext_black(int fd);
-int ftext_bold(int fd); /* synonym for bright */
-int ftext_underline(int fd);
+/** Font operations, change colour/style of text following it **/
+int f_default();
+int f_bright();
+int f_red();
+int f_green();
+int f_yellow();
+int f_blue();
+int f_magenta();
+int f_white();
+int f_black();
+int f_cyan();
+int f_bold(); /* synonym for bright */
+int f_underline();
 
-/* cursor operations */
-/* non f versions write to stdout */
-/* return code is that returned by the f versions */
-int curs_up();
-int curs_down();
-int curs_right();
-int curs_left();
-int curs_nline();
-int curs_pline();
-int curs_line0();
-int curs_save();
-int curs_restore();
-/* same as above but the file descriptor to write to can be specified */
-/* return code is that returned by write */
-int fcurs_up(int fd);
-int fcurs_down(int fd);
-int fcurs_right(int fd);
-int fcurs_left(int fd);
-int fcurs_nline(int fd);
-int fcurs_pline(int fd);
-int fcurs_line0(int fd);
-int fcurs_save(int fd);
-int fcurs_restore(int fd);
+int ff_default(int fd);
+int ff_bright(int fd);
+int ff_red(int fd);
+int ff_green(int fd);
+int ff_yellow(int fd);
+int ff_blue(int fd);
+int ff_magenta(int fd);
+int ff_cyan(int fd);
+int ff_white(int fd);
+int ff_black(int fd);
+int ff_bold(int fd); /* synonym for bright */
+int ff_underline(int fd);
+
+/** Cursor operations **/
+int c_up();
+int c_down();
+int c_right();
+int c_left();
+int c_nline();
+int c_pline();
+int c_line0();
+int c_save();
+int c_restore();
+
+int fc_up(int fd);
+int fc_down(int fd);
+int fc_right(int fd);
+int fc_left(int fd);
+int fc_nline(int fd);
+int fc_pline(int fd);
+int fc_line0(int fd);
+int fc_save(int fd);
+int fc_restore(int fd);
 
 #endif
