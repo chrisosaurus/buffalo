@@ -1,0 +1,34 @@
+internal:
+  load
+  save
+  cursor movement
+  insertion
+  modal/non modal - defined at compile time
+  literal insert
+  cut (char, word, line, region)
+  paste
+
+  extras:
+    line numbers
+    showing certain characters (non printable ie esc, end of lines, end of files, non uses space, etc.)
+    'plain' mode, all colours, line numbers, extra chars turned off (so copying/pasting is 'flawless').
+    ability to paste to xclip
+
+external:
+  search - grep?
+  find/replace - sed?
+  syntax highlighting
+  bracket matching
+  fix style/indentation
+
+codes.* will eventually become its own library, maybe stw (simple termcode wrapper) 'stew'
+syntax highlighting is own tool (run on a line every time that line is modified)
+bracket matching requires whole file or atleast large chunk OR can use a stack of applied colours and a 'next colour' pointer
+style/indentation is only run on users request so can be 'expensive', will require understanding of brackets so tools can be combined
+
+
+consider:
+  lazy load
+  storing text
+  multiple buffers (function of editor or environment (wm,shell,tabbed, etc.))
+
