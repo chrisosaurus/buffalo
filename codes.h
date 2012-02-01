@@ -1,6 +1,14 @@
 #ifndef CODES_H
 #define CODES_H
 
+/** ASCII definitions **/
+#define K_ENT 10
+#define K_ESC 27
+#define K_BKS 127
+#define CONTROL(c) (c-96)
+#define SHIFT(c) (c-32)
+
+
 /* All functions come in two forms
  * non f forms write to stdout and will return the result of the equiv f form
  * f forms are the same as the non f forms except that you must specify a file descriptor to write to
