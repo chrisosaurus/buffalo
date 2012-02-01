@@ -1,0 +1,5 @@
+each line must already contain a byte count
+
+if each line holds more memory than it needs, it must also hold a capacity (bytes)
+
+if we want to know the char lenght of a line cheaply, each line must also hold a utf8len (wchars)
