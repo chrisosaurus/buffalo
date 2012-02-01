@@ -30,7 +30,7 @@ int main(){
 	c_line0();
 
 	//write(1, "hello\n", 6);
-	char chs[2] = {0, 0};
+	char chs[7] = {0, 0, 0, 0, 0, 0, 0};
 	int alive = 1;
 	int interactive = 0;
 
@@ -39,15 +39,15 @@ int main(){
 
 	// main loop
 	while( alive ){
-		chs[1] = 0;
-		read(0, &chs, 2);
+		chs[0]=chs[1]=chs[2]=chs[3]=chs[4]=chs[5]=chs[6]=0;
+		read(0, &chs, 7);
 		/*write(1, "got:", 4);
 			write(1, chs, 1);
 			printf("%d\n", chs[0]); */
 		if( chs[0] == '!' )
 			break;
 		
-		printf("%u %u\n", chs[0], chs[1]);
+		printf("%u %u %u %u %u %u %u\n", chs[0], chs[1], chs[2], chs[3], chs[4], chs[5], chs[6]);
 		//write(1, chs, 2);
 	}
 
