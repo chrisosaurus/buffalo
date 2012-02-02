@@ -51,6 +51,8 @@ int c_pline(){ return fc_pline(1); }
 int c_line0(){ return fc_line0(1); }
 int c_save(){ return fc_save(1); }
 int c_restore(){ return fc_restore(1); }
+int c_scrlu(){ return fc_scrlu(1); }
+int c_scrld(){ return fc_scrld(1); }
 
 int fc_up(int fd){ return write(fd, "[A", 3); }
 int fc_down(int fd){ return write(fd, "[B", 3); }
@@ -61,3 +63,5 @@ int fc_pline(int fd){ return write(fd, "[F", 3); }
 int fc_line0(int fd){ return write(fd, "[0;0H", 6); }
 int fc_save(int fd){ return write(fd, "[s", 3); }
 int fc_restore(int fd){ return write(fd, "[u", 3); }
+int fc_scrlu(int fd){ return write(fd, "[S", 3); }
+int fc_scrld(int fd){ return write(fd, "[T", 3); }

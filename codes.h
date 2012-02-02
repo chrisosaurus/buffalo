@@ -64,6 +64,8 @@ int c_pline();
 int c_line0();
 int c_save();
 int c_restore();
+int c_scrlu();
+int c_scrld();
 
 int fc_up(int fd);
 int fc_down(int fd);
@@ -74,5 +76,7 @@ int fc_pline(int fd);
 int fc_line0(int fd);
 int fc_save(int fd);
 int fc_restore(int fd);
+int fc_scrlu(int fd);
+int fc_scld(int fd);
 
 #endif

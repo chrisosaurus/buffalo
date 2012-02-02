@@ -46,7 +46,10 @@ int main(){
 			printf("%d\n", chs[0]); */
 		if( chs[0] == '!' )
 			break;
-		
+		if( chs[0] == '@' ){
+			c_scrld();
+			continue;
+		}
 		printf("%u %u %u %u %u %u %u\n", chs[0], chs[1], chs[2], chs[3], chs[4], chs[5], chs[6]);
 		//write(1, chs, 2);
 	}
