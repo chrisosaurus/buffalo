@@ -15,7 +15,8 @@ typedef struct { /* position in file */
 	int o; /* character offset within the line */
 } Filepos;
 
-typedef struct { /* argument for callback */
+typedef union { /* argument for callback */
+    Filepos pos;
 } Arg;
 
 typedef struct { /* key binding */
@@ -29,16 +30,17 @@ static Line *start, *end; /* first and last lines */
 static Line *screen; /* first line on screen */
 static Filepos cur; /* current position in file */
 
-/* commands that can be bounc to keys */
+/** Internal functions **/
+static Filepos i_insert(char *c, Filepos pos); /* insert c at pos and return new filepos after the inserted char */
 
-/* internal functions */
-static Filepos i_insert(char c, Filepos pos); /* insert c at pos and return new filepos after the inserted char */
+/** Movement functions **/
+static Filepos m_bof(Arg arg); /* move to beginning of file */
 
 #include "config.h"
 
 /* internal functions */
 Filepos /* insert c at post and return new filepos after the inserted char */
-i_insert(char c, Filepos pos){}
+i_insert(char *c, Filepos pos){}
 
 
 int /* the magic main function */
