@@ -14,9 +14,11 @@
 /** Terminal operations **/
 typedef struct termios tstate;
 /* get current state */
-tstate t_getstate();
+int t_getstate(tstate *state);
+/* take state, set needed flags and return */
+tstate t_initstate(const tstate *state);
 /* set state */
-int t_setstate(tstate state);
+int t_setstate(const tstate *state);
 /* send clear code */
 int t_clear();
 

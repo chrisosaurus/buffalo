@@ -1,10 +1,25 @@
 #include <unistd.h>
+#include <unistd.h> /* tcgetattr and tcsetattr */
 #include "codes.h"
 
 /** Terminal operations **/
-tstate t_getstate(){ /* FIXME */ }
-
-int t_setstate(tstate state){ /* FIXME */ }
+int t_getstate(tstate *state){
+	if( tcgetattr(1, state) )
+		return -1;
+	return 0;
+}
+tstate t_initstate(const tstate *state){
+	tstate nstate = *state;
+	nstate.c_lflag = 0; /* set non-canonical */
+	nstate.c_cc[VTIME] = 0; /* set timeout */
+	nstate.c_cc[VMIN] = 1; /* set read to return after it has one char available */
+	return nstate;
+}
+int t_setstate(const tstate *state){
+	if( tcsetattr(1, TCSANOW, state) )
+		return -1;
+	return 0;
+}
 
 int t_clear(){ return write(1, "[2J", 4 ); }
 

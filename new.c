@@ -84,9 +84,9 @@ i_utf8len(const unsigned char *c){
 void
 i_setup(void){
 	/* TODO write state to orig, modify local copy and set */
-	orig = t_getstate();
-	tstate new = orig;
-
+	t_getstate(&orig);
+	tstate nstate = t_initstate(&orig);
+	t_setstate(&nstate);
 }
 
 void
