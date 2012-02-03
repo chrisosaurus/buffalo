@@ -87,18 +87,25 @@ i_setup(void){
 	t_getstate(&orig);
 	tstate nstate = t_initstate(&orig);
 	t_setstate(&nstate);
+	t_clear();
+	f_default();
+	c_line0();
 }
 
 void
 i_tidyup(void){
 	/* TODO restore tstate and stuff */
+	t_setstate(&orig);
+	t_clear();
+	f_default();
+	c_line0();
 }
 
 int /* the magic main function */
 main(int argc, char **argv){
 	/* TODO setup */
 	i_setup();
-	while( 1 ){
+	while( 0 ){
 		/* TODO main loop, check input, see what happend next */
 	}
 	/* TODO tidy up */
