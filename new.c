@@ -36,7 +36,7 @@ typedef struct { /* key binding */
 static Line *start=0, *end=0; /* first and last lines */
 static Line *screen = 0; /* first line on screen */
 static Filepos cur = { 0, 0 }; /* current position in file */
-static tstate orig = 0; /* original terminal state */
+static tstate orig; /* original terminal state */
 
 /** Internal functions **/
 static Filepos i_insert(const char *c, Filepos pos); /* insert c at pos and return new filepos after the inserted char */
@@ -83,24 +83,24 @@ i_utf8len(const unsigned char *c){
 
 void
 i_setup(void){
-    /* TODO write state to orig, modify local copy and set */
-    orig = t_getstate();
-    tstate new = orig;
+	/* TODO write state to orig, modify local copy and set */
+	orig = t_getstate();
+	tstate new = orig;
 
 }
 
 void
 i_tidyup(void){
-    /* TODO restore tstate and stuff */
+	/* TODO restore tstate and stuff */
 }
 
 int /* the magic main function */
 main(int argc, char **argv){
 	/* TODO setup */
-    i_setup();
+	i_setup();
 	while( 1 ){
 		/* TODO main loop, check input, see what happend next */
 	}
 	/* TODO tidy up */
-    i_tidyup();
+	i_tidyup();
 }
