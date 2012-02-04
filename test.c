@@ -36,6 +36,14 @@ int main(){
 
 	// testing
 	f_default();
+	write(1, "hello ", 6);
+	f_blue();
+	write(1, "world", 5);
+	f_default();
+	int h = t_getheight();
+	int i;
+	for( i=1; i<h; ++i )
+		printf("\n======");
 
 	// main loop
 	while( alive ){
@@ -47,6 +55,10 @@ int main(){
 		if( chs[0] == '!' )
 			break;
 		if( chs[0] == '@' ){
+			c_scrlu();
+			continue;
+		}
+		if( chs[0] == '#' ){
 			c_scrld();
 			continue;
 		}

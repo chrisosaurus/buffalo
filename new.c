@@ -1,7 +1,7 @@
 #include <stdbool.h> /* bool, true and false */
-#include "codes.h" /* because ncurses sucks more */
 #include <stdlib.h> /* realloc, malloc, calloc */
 #include <string.h> /* memmove */
+#include "codes.h" /* because ncurses sucks more */
 
 #define LINESIZE 80
 
@@ -34,7 +34,7 @@ typedef struct { /* key binding */
 
 /* Naughty global variables */
 static Line *start=0, *end=0; /* first and last lines */
-static Line *screen = 0; /* first line on screen */
+static Line *view = 0; /* first line on screen */
 static Filepos cur = { 0, 0 }; /* current position in file */
 static tstate orig; /* original terminal state */
 
@@ -43,6 +43,7 @@ static Filepos i_insert(const char *c, Filepos pos); /* insert c at pos and retu
 static int i_utf8len(const unsigned char *c); /* return number of bytes of utf char c */
 static void i_setup(void); /* setup the terminal for editing */
 static void i_tidyup(void); /* clean up and return the terminal to it's original state */
+static void i_draw(void); /* draw lines from view until either the screen if full or we run out of lines */
 
 /** Movement functions **/
 static Filepos m_bof(Arg arg); /* move to beginning of file */
@@ -83,7 +84,6 @@ i_utf8len(const unsigned char *c){
 
 void
 i_setup(void){
-	/* TODO write state to orig, modify local copy and set */
 	t_getstate(&orig);
 	tstate nstate = t_initstate(&orig);
 	t_setstate(&nstate);
@@ -94,18 +94,46 @@ i_setup(void){
 
 void
 i_tidyup(void){
-	/* TODO restore tstate and stuff */
 	t_setstate(&orig);
-	t_clear();
+	/*t_clear();
 	f_default();
-	c_line0();
+	c_line0(); */
+}
+
+void
+i_draw(void){
+	int h = t_getheight();
+	int i=0;
+	Line *l = view;
+	for( ; i<h, l; ++i, l=l->n){
+		write(1, "\n", 1);
+		write(1, l->c, l->l);
+	}
+
+	if( i<h )
+		f_blue();
+	for( ; i<h; ++i)
+		write(1, "\n$", 2);
+	f_default();
 }
 
 int /* the magic main function */
 main(int argc, char **argv){
 	/* TODO setup */
 	i_setup();
-	while( 0 ){
+	/* FIXME testing data */
+	view = (Line *) malloc( sizeof(Line) );
+	view->c = "hello ";
+	view->l = 6;
+	view->n = (Line *) malloc( sizeof(Line) );
+	view->n->c = "world";
+	view->n->l = 5;
+	char ch[7];
+	while( 1 ){
+		i_draw();
+		t_read(ch, 7);
+		if( ch[0] == '!' )
+			break;
 		/* TODO main loop, check input, see what happend next */
 	}
 	/* TODO tidy up */

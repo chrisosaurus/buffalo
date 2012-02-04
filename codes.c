@@ -1,5 +1,5 @@
-#include <unistd.h>
 #include <unistd.h> /* tcgetattr and tcsetattr */
+#include <sys/ioctl.h> /* TCIOCGWINSZ */
 #include "codes.h"
 
 /** Terminal operations **/
@@ -22,6 +22,24 @@ int t_setstate(const tstate *state){
 }
 
 int t_clear(){ return write(1, "[2J", 4 ); }
+int t_getwidth(){
+	/* do I need to take TCIOCGSIZE into account? if so http://www.linuxquestions.org/questions/programming-9/get-width-height-of-a-terminal-window-in-c-810739/ */
+	struct winsize ts;
+	if( ioctl(0, TIOCGWINSZ, &ts) )
+		return -1;
+	return ts.ws_col;
+}
+int t_getheight(){
+	/* do I need to take TCIOCGSIZE into account? if so http://www.linuxquestions.org/questions/programming-9/get-width-height-of-a-terminal-window-in-c-810739/ */
+	struct winsize ts;
+	if( ioctl(0, TIOCGWINSZ, &ts) )
+		return -1;
+	return ts.ws_row;
+}
+int t_read(char *c, int len){
+	return read(0, c, len);
+}
+
 
 /** Font operations **/
 int f_default(){ return write(1, "[0m", 4 ); }
@@ -46,7 +64,11 @@ int c_nline(){ return write(1, "[E", 3); }
 int c_pline(){ return write(1, "[F", 3); }
 int c_line0(){ return write(1, "[0;0H", 6); }
 int c_save(){ return write(1, "[s", 3); }
+int c_enscrl(){ return write(1, "", 3); }
 int c_restore(){ return write(1, "[u", 3); }
-int c_scrlu(){ return write(1, "[S", 3); }
-int c_scrld(){ return write(1, "[T", 3); }
-
+/*int c_scrle(){ return write(1, "[r", 3); } */
+int c_scrlu(){ return write(1, "M", 2); }
+int c_scrld(){ return write(1, "D", 2); }
+/* scrlu will move the curs up a line, scrld down. if at edge of screen will keep going, inserting blank lines if needed
+ * up and down will not insert blank lines
+ * CSI n S and CSI n T will scroll the page about the cursor, up or down, and will also insert blank lines if needed */
