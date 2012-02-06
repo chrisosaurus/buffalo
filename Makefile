@@ -1,4 +1,4 @@
-# buffalo - buffalo buffalo buffalo buffalo
+# buffalo - buffalo buffalo buffalo buffalo buffalo buffalo buffalo
 # See LICENSE file for copyright and license details.
 
 include config.mk
