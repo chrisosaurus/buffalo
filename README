@@ -1,1 +1,31 @@
-nothing much here...
+buffalo - buffalo buffalo buffalo buffalo buffalo buffalo
+=========================================================
+buffalo is a simple, modeless, ncurses-less text editor
+
+Requirements
+------------
+buffalo requires a POSIX compliant c std lib.
+buffalo is otherwise self contained, it should have come with a codes.h and codes.c
+which is what it uses to talk to the terminal.
+
+Installing
+----------
+Edit config.mk to match your local setup (need to set install and man paths)
+You may also want to create a config.h, config.def.h is the default.
+
+Afterwards you should be able to install buffalo with (root may be required):
+
+    make clean install
+
+
+Running buffalo
+---------------
+
+    buffalo
+
+
+Name
+----
+buffalo buffalo buffalo buffalo buffalo buffalo buffalo.
+Isn't english fun.
+See wikipedia.
