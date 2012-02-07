@@ -95,6 +95,7 @@ i_setup(void){
 void
 i_tidyup(void){
 	t_setstate(&orig);
+    /* FIXME add back in post testing */
 	/*t_clear();
 	f_default();
 	c_line0(); */
@@ -119,7 +120,9 @@ i_draw(void){
 
 int /* the magic main function */
 main(int argc, char **argv){
-	/* TODO setup */
+	char ch[7]; /* characters to read into, 6 is maximum utf8 or terminal character.
+                   7th place adds a nice \0 onto the end */
+
 	i_setup();
 	/* FIXME testing data */
 	view = (Line *) malloc( sizeof(Line) );
@@ -128,7 +131,7 @@ main(int argc, char **argv){
 	view->n = (Line *) malloc( sizeof(Line) );
 	view->n->c = "world";
 	view->n->l = 5;
-	char ch[7];
+
 	while( 1 ){
 		i_draw();
 		t_read(ch, 7);
@@ -136,6 +139,5 @@ main(int argc, char **argv){
 			break;
 		/* TODO main loop, check input, see what happend next */
 	}
-	/* TODO tidy up */
 	i_tidyup();
 }
