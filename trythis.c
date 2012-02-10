@@ -27,4 +27,10 @@ int main(){
     puts("[32m");
     puts("GREEEEEEENNN");
     printf("%c[33m%s", 0x1b, "YELLOW");
+    int i;
+    for( i=0; i<10; ++i )
+        puts("hehe");
+    puts("enter to exit");
+    fputs("[0;0H", 1);
+    getchar();
 }
