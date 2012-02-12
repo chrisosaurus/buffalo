@@ -48,5 +48,6 @@ int c_restore();
 /*int c_scrle(); enable scrolling - needed? */
 int c_scrlu();
 int c_scrld();
+int c_goto(int line, int pos);
 
 #endif

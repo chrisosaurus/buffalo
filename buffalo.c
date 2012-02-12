@@ -1,6 +1,8 @@
 #include <stdbool.h> /* bool, true and false */
 #include <stdlib.h> /* realloc, malloc, calloc */
 #include <string.h> /* memmove */
+#include <unistd.h> /* write */
+#include <stdio.h> 
 #include "codes.h" /* because ncurses sucks more */
 
 #define LINESIZE 80
@@ -33,23 +35,73 @@ typedef struct { /* key binding */
 
 
 /* Naughty global variables */
-static Line *start=0, *end=0; /* first and last lines */
-static Line *view = 0; /* first line on screen */
+static Line *fstart=0, *fend=0; /* first and last lines */
+static Line *vstart=0, *vend=0; /* first and last lines on screen */
 static Filepos cur = { 0, 0 }; /* current position in file */
 static tstate orig; /* original terminal state */
+static char *curfile; /* current file name */
 
 /** Internal functions **/
 static Filepos i_insert(const char *c, Filepos pos); /* insert c at pos and return new filepos after the inserted char */
 static int i_utf8len(const unsigned char *c); /* return number of bytes of utf char c */
 static void i_setup(void); /* setup the terminal for editing */
 static void i_tidyup(void); /* clean up and return the terminal to it's original state */
-static void i_draw(void); /* draw lines from view until either the screen if full or we run out of lines */
+static void i_draw(void); /* draw lines from vstart until either the screen if full or we run out of lines */
+static int i_loadfile(char *fname); /* initialise data structure and read in file */
 
 /** Movement functions **/
 static Filepos m_bof(Arg arg); /* move to beginning of file */
+static Filepos m_eof(Arg arg); /* move to end of file */
+static Filepos m_lc(Arg arg); /* move cursor left one char */
+static Filepos m_rc(Arg arg); /* move cursor right one char */
+static Filepos m_pl(Arg arg); /* move cursor to previous line */
+static Filepos m_nl(Arg arg); /* move cusor to next line */
 
 
 #include "config.h"
+
+/* Movement functions definitions */
+Filepos /* move cursor left one char */
+m_lc(Arg arg){
+	if( ! arg.p.l || ! arg.p.o)
+		return arg.p;
+	--arg.p.o;
+	c_left();
+	return arg.p;
+}
+
+Filepos /* move cursor right one char */
+m_rc(Arg arg){
+	if( ! arg.p.l )
+		return arg.p;
+	if( arg.p.o >= arg.p.l->l )
+		return arg.p;
+	++arg.p.o;
+	c_right();
+	return arg.p;
+}
+
+Filepos /* move cursor to previous line */
+m_pl(Arg arg){
+	if( ! arg.p.l || ! arg.p.l->p )
+		return arg.p;
+	arg.p.l = arg.p.l->p;
+	if( arg.p.o > arg.p.l->l )
+		arg.p.o = arg.p.l->l;
+	c_scrlu(); /* FIXME pline, up, or scrlu ? */
+	return arg.p;
+}
+
+Filepos /* move cursor to next line */
+m_nl(Arg arg){
+	if( ! arg.p.l || ! arg.p.l->n )
+		return arg.p;
+	arg.p.l = arg.p.l->n;
+	if( arg.p.o > arg.p.l->l )
+		arg.p.o = arg.p.l->l;
+	c_scrld(); /* FIXME nline, down, or scrld ? */
+	return arg.p;
+}
 
 /* internal function definitions */
 Filepos /* insert c at post and return new filepos after the inserted char */
@@ -105,17 +157,45 @@ void
 i_draw(void){
 	int h = t_getheight();
 	int i=0;
-	Line *l = view;
-	for( ; i<h, l; ++i, l=l->n){
-		write(1, "\n", 1);
-		write(1, l->c, l->l);
+	Line *l = vstart;
+	t_clear();
+	for( ; i<h, l; ++i, l=l->n)
+		puts(l->c);
+
+	for( ; i<h-1; ++i)
+		puts("");
+	c_line0();
+	//c_goto(0, cur.o); /* FIXME */
+}
+
+int /* initialise data structure and read in file */
+i_loadfile(char *fname){
+	int fd;
+	char *buf=0;
+	ssize_t n;
+
+
+	if( fname == 0 || fname[0] == '-' )
+		fd = 0;
+	else{
+		if( (fd=open(fname, "r")) == -1 )
+			return -1; /* FIXME can't open file */
+		curfile = strdup(fname);
 	}
 
-	if( i<h )
-		f_blue();
-	for( ; i<h; ++i)
-		write(1, "\n$", 2);
-	f_default();
+	if( (buf=calloc(1, BUFSIZ+1)) == 0 ) return -1; /* FIXME can't malloc */
+	while( (n=read(fd, buf, BUFSIZ)) > 0){
+		buf[n] = '\0';
+		cur = i_insert(buf, cur);
+	}
+
+	if( fd != 0 )
+		close (fd);
+
+	free(buf);
+	cur.l = fstart;
+	cur.o = 0;
+	return 0;
 }
 
 int /* the magic main function */
@@ -125,18 +205,38 @@ main(int argc, char **argv){
 
 	i_setup();
 	/* FIXME testing data */
-	view = (Line *) malloc( sizeof(Line) );
-	view->c = "hello ";
-	view->l = 6;
-	view->n = (Line *) malloc( sizeof(Line) );
-	view->n->c = "world";
-	view->n->l = 5;
+	vstart = (Line *) malloc( sizeof(Line) );
+	vstart->c = "hello ";
+	vstart->l = 6;
+	vstart->n = (Line *) malloc( sizeof(Line) );
+	vstart->n->p = vstart;
+	vstart->n->c = "world";
+	vstart->n->l = 5;
+	vstart->n->n = (Line *) malloc(sizeof(Line) );
+	vstart->n->n->p = vstart->n;
+	vstart->n->n->c = "DUDE";
+	vstart->n->n->l = 4;
+	vend = vstart->n->n;
 
+	cur.l = vstart;
+
+	i_draw();
 	while( 1 ){
-		i_draw();
 		t_read(ch, 7);
 		if( ch[0] == '!' )
 			break;
+		else if( ch[0] == 'h' )
+			cur = m_lc( (Arg) {.p=cur} );
+		else if( ch[0] == 'j')
+			cur = m_nl( (Arg) {.p=cur} );
+		else if( ch[0] == 'k')
+			cur = m_pl( (Arg) {.p=cur} );
+		else if( ch[0] == 'l')
+			cur = m_rc( (Arg) {.p=cur} );
+		else if( ch[0] == 'a' )
+			write(1, "a", 1);
+		else if( ch[0] == '\n' )
+			write(1, "\n", 1);
 		/* TODO main loop, check input, see what happend next */
 	}
 	i_tidyup();

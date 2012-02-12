@@ -31,6 +31,6 @@ int main(){
     for( i=0; i<10; ++i )
         puts("hehe");
     puts("enter to exit");
-    fputs("[0;0H", 1);
+    fputs("[0;0H", stdout);
     getchar();
 }
