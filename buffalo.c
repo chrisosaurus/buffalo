@@ -1,6 +1,6 @@
 #include <stdbool.h> /* bool, true and false */
 #include <stdlib.h> /* realloc, malloc, calloc */
-#include <string.h> /* memmove, strdup */
+#include <string.h> /* memmove, strlen, strcpy */
 #include <unistd.h> /* write */
 #include <stdio.h> /* puts, BUFSIZ */
 #include <fcntl.h> /* open, close */
@@ -200,7 +200,7 @@ i_loadfile(char *fname){
 	else{
 		if( (fd=open(fname, O_RDONLY)) == -1 )
 			return -1; /* FIXME can't open file */
-		curfile = strdup(fname);
+		curfile = strcpy(malloc(strlen(fname) + 1), fname);
 	}
 
 	if( (buf=calloc(1, BUFSIZ+1)) == 0 ) return -1; /* FIXME can't malloc */
