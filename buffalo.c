@@ -1,11 +1,14 @@
 #include <stdbool.h> /* bool, true and false */
 #include <stdlib.h> /* realloc, malloc, calloc */
-#include <string.h> /* memmove */
+#include <string.h> /* memmove, strdup */
 #include <unistd.h> /* write */
-#include <stdio.h> 
+#include <stdio.h> /* puts, BUFSIZ */
+#include <fcntl.h> /* open, close */
 #include "codes.h" /* because ncurses sucks more */
 
 #define LINESIZE 80
+
+#define LENGTH(blah) ((int)(sizeof(blah)/sizeof*(blah)))
 
 typedef struct Line Line;
 struct Line {
@@ -23,13 +26,13 @@ typedef struct { /* position in file */
 } Filepos;
 
 typedef union { /* argument for callback funcs */
-	Filepos p;
 	const char *c;
+	Filepos (*m_func)(Filepos);
 } Arg;
 
 typedef struct { /* key binding */
 	char c[7]; /* key code to bind to */
-	void (*func)(const Arg *arg); /* function to perform */
+	void (*f_func)(const Arg *arg); /* function to perform */
 	const Arg arg; /* argument to func */
 } Key;
 
@@ -50,57 +53,73 @@ static void i_draw(void); /* draw lines from vstart until either the screen if f
 static int i_loadfile(char *fname); /* initialise data structure and read in file */
 
 /** Movement functions **/
-static Filepos m_bof(Arg arg); /* move to beginning of file */
-static Filepos m_eof(Arg arg); /* move to end of file */
-static Filepos m_lc(Arg arg); /* move cursor left one char */
-static Filepos m_rc(Arg arg); /* move cursor right one char */
-static Filepos m_pl(Arg arg); /* move cursor to previous line */
-static Filepos m_nl(Arg arg); /* move cusor to next line */
+static Filepos m_startofline(Filepos pos);
+static Filepos m_endofline(Filepos pos);
+static Filepos m_startoffile(Filepos pos); /* move to beginning of file */
+static Filepos m_endoffile(Filepos pos); /* move to end of file */
+static Filepos m_prevchar(Filepos pos); /* move cursor left one char */
+static Filepos m_nextchar(Filepos pos); /* move cursor right one char */
+static Filepos m_prevline(Filepos pos); /* move cursor to previous line */
+static Filepos m_nextline(Filepos pos); /* move cusor to next line */
+static Filepos m_prevword(Filepos pos);
+static Filepos m_nextword(Filepos pos);
+static Filepos m_prevscreen(Filepos pos);
+static Filepos m_nextscreen(Filepos pos);
+
+/** Functions to bind to a key **/
+static void f_cur(const Arg *arg); /* call arg.func(cur) and set cur to return value */
 
 
 #include "config.h"
 
+/* Function definitions */
+void /* run the Arg with the current cursor position */
+f_cur(const Arg *arg){
+	cur = arg->m_func(cur);
+}
+
 /* Movement functions definitions */
 Filepos /* move cursor left one char */
-m_lc(Arg arg){
-	if( ! arg.p.l || ! arg.p.o)
-		return arg.p;
-	--arg.p.o;
+m_nexchar(Filepos pos){
+	if( ! pos.l || ! pos.o)
+		return pos;
+	if( --pos.o < 0 )
+		pos.o = 0;
 	c_left();
-	return arg.p;
+	return pos;
 }
 
 Filepos /* move cursor right one char */
-m_rc(Arg arg){
-	if( ! arg.p.l )
-		return arg.p;
-	if( arg.p.o >= arg.p.l->l )
-		return arg.p;
-	++arg.p.o;
+m_nextchar(Filepos pos){
+	if( ! pos.l )
+		return pos;
+	if( pos.o >= pos.l->l )
+		return pos; /* FIXME check for going off the end, remember pos.l->l is the char count, not utf8 count */
+	++pos.o;
 	c_right();
-	return arg.p;
+	return pos;
 }
 
 Filepos /* move cursor to previous line */
-m_pl(Arg arg){
-	if( ! arg.p.l || ! arg.p.l->p )
-		return arg.p;
-	arg.p.l = arg.p.l->p;
-	if( arg.p.o > arg.p.l->l )
-		arg.p.o = arg.p.l->l;
+m_prevline(Filepos pos){
+	if( ! pos.l || ! pos.l->p )
+		return pos;
+	pos.l = pos.l->p;
+	if( pos.o > pos.l->l )
+		pos.o = pos.l->l; /* FIXME check for going off end */
 	c_scrlu(); /* FIXME pline, up, or scrlu ? */
-	return arg.p;
+	return pos;
 }
 
 Filepos /* move cursor to next line */
-m_nl(Arg arg){
-	if( ! arg.p.l || ! arg.p.l->n )
-		return arg.p;
-	arg.p.l = arg.p.l->n;
-	if( arg.p.o > arg.p.l->l )
-		arg.p.o = arg.p.l->l;
+m_nextline(Filepos pos){
+	if( ! pos.l || ! pos.l->n )
+		return pos;
+	pos.l = pos.l->n;
+	if( pos.o > pos.l->l )
+		pos.o = pos.l->l; /* FIXME check for going off end */
 	c_scrld(); /* FIXME nline, down, or scrld ? */
-	return arg.p;
+	return pos;
 }
 
 /* internal function definitions */
@@ -122,6 +141,7 @@ i_insert(const char *c, Filepos pos){
 			/* FIXME need a \0 at the end of each string */
 		}
 	}
+	return pos; /* FIXME */
 }
 
 int /* return number of bytes of utf char c */
@@ -147,10 +167,10 @@ i_setup(void){
 void
 i_tidyup(void){
 	t_setstate(&orig);
-    /* FIXME add back in post testing */
+	/* FIXME add back in post testing */
 	/*t_clear();
-	f_default();
-	c_line0(); */
+		f_default();
+		c_line0(); */
 }
 
 void
@@ -159,7 +179,7 @@ i_draw(void){
 	int i=0;
 	Line *l = vstart;
 	t_clear();
-	for( ; i<h, l; ++i, l=l->n)
+	for( ; i<h && l; ++i, l=l->n)
 		puts(l->c);
 
 	for( ; i<h-1; ++i)
@@ -178,7 +198,7 @@ i_loadfile(char *fname){
 	if( fname == 0 || fname[0] == '-' )
 		fd = 0;
 	else{
-		if( (fd=open(fname, "r")) == -1 )
+		if( (fd=open(fname, O_RDONLY)) == -1 )
 			return -1; /* FIXME can't open file */
 		curfile = strdup(fname);
 	}
@@ -200,8 +220,10 @@ i_loadfile(char *fname){
 
 int /* the magic main function */
 main(int argc, char **argv){
-	char ch[7]; /* characters to read into, 6 is maximum utf8 or terminal character.
-                   7th place adds a nice \0 onto the end */
+	int i;
+	int running=1; /* set to false to stop, FIXME make into a naughty global later */
+	unsigned char ch[7]; /* characters to read into, 6 is maximum utf8 or terminal character.
+													7th place adds a nice \0 onto the end */
 
 	i_setup();
 	/* FIXME testing data */
@@ -221,23 +243,26 @@ main(int argc, char **argv){
 	cur.l = vstart;
 
 	i_draw();
-	while( 1 ){
+	while( running ){
 		t_read(ch, 7);
 		if( ch[0] == '!' )
-			break;
-		else if( ch[0] == 'h' )
-			cur = m_lc( (Arg) {.p=cur} );
-		else if( ch[0] == 'j')
-			cur = m_nl( (Arg) {.p=cur} );
-		else if( ch[0] == 'k')
-			cur = m_pl( (Arg) {.p=cur} );
-		else if( ch[0] == 'l')
-			cur = m_rc( (Arg) {.p=cur} );
+			running=0;
 		else if( ch[0] == 'a' )
 			write(1, "a", 1);
 		else if( ch[0] == '\n' )
 			write(1, "\n", 1);
-		/* TODO main loop, check input, see what happend next */
+		if( i_utf8len(ch) > 1 ){
+			/* FIXME have fun inserting me */
+		} else if( ch[0] == 0x1B ){ /* FIXME change to constant to support CONTROL */
+			for( i=0; i<LENGTH(keys); ++i )
+				if( memcmp( ch, keys[i].c, sizeof(keys[i].c)) == 0 ){
+					keys[i].f_func( &(keys[i].arg) );
+					break;
+				}
+		} else { /* ascii character */
+			/* FIXME insert */
+		}
+
 	}
 	i_tidyup();
 }
