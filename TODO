@@ -1,5 +1,13 @@
-loading of files into Lines
-moving around
-
 codes.* will eventually become its own library, maybe stw (simple termcode wrapper) 'stew'
 
+TODO:
+quitting
+loading/saving of files
+cursor / token movement
+typing of text
+set / goto / goto&set mark
+\n bf/af cur line
+sof/eof sol/eol movement
+selection / paste / cut / delete
+search
+screen movement
