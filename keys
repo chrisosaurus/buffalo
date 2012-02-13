@@ -1,0 +1,7 @@
+----- ------ ----- ------ -----  ----- ------ ----- ------ -----
+quit  write                            SOF    uscr  EOF         
+             edit         smk          SOL    uchr  SOL         
+----- ------ ----- ------ -----  ----- ------ ----- ------ -----
+      paste  del          g&smk  \nbf  lwrd   dscr  rwrd        
+      sel    cut          gmk    \naf  lchr   dchar rchar       
+----- ------ ----- ------ -----  ----- ------ ----- ------ -----
