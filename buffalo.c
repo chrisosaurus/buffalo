@@ -12,12 +12,12 @@
 
 typedef struct Line Line;
 struct Line {
-	char *c; /* contents */
-	int l; /* number of bytes */
-	int m; /* capacity as multiple of LINESIZE */
-	bool d; /* been modified since last draw */
-	Line *n; /* next line or null */
-	Line *p; /* prev line or null */
+	char *c; /* contents, \0 terminated and may include a \n */
+	int len; /* number of utf8 chars (one ut8 char can be many bytes)*/
+	int mul; /* capacity as multiple of LINESIZE */
+	bool dirty; /* been modified since last draw */
+	Line *next; /* next line or null */
+	Line *prev; /* prev line or null */
 };
 
 typedef struct { /* position in file */
@@ -80,7 +80,7 @@ f_cur(const Arg *arg){
 
 /* Movement functions definitions */
 Filepos /* move cursor left one char */
-m_nexchar(Filepos pos){
+m_prevchar(Filepos pos){
 	if( ! pos.l || ! pos.o)
 		return pos;
 	if( --pos.o < 0 )

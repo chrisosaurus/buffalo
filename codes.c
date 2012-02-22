@@ -38,7 +38,8 @@ int t_getheight(){
 		return -1;
 	return ts.ws_row;
 }
-int t_read(unsigned char *c, int len){
+int t_read(unsigned char *c, size_t len){
+	memset(c, 0, len*sizeof(unsigned char));
 	return read(0, c, len);
 }
 
