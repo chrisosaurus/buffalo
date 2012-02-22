@@ -81,11 +81,16 @@ f_cur(const Arg *arg){
 /* Movement functions definitions */
 Filepos /* move cursor left one char */
 m_prevchar(Filepos pos){
-	if( ! pos.l || ! pos.o)
+	if( ! pos.l )
 		return pos;
-	if( --pos.o < 0 )
-		pos.o = 0;
-	c_left();
+	if( --pos.o < 0 ){
+		if( pos.l->prev ){
+			pos.l = pos.l->prev;
+			pos.o = pos.l->len;
+		} else
+			pos.o = 0;
+	}
+	c_left(); /* FIXME need to goto position rather than move */
 	return pos;
 }
 
@@ -93,32 +98,36 @@ Filepos /* move cursor right one char */
 m_nextchar(Filepos pos){
 	if( ! pos.l )
 		return pos;
-	if( pos.o >= pos.l->l )
-		return pos; /* FIXME check for going off the end, remember pos.l->l is the char count, not utf8 count */
-	++pos.o;
-	c_right();
+	if( ++pos.o >= pos.l->len ){
+		if( pos.l->next ){
+			pos.l = pos.l->next;
+			pos.o = 0;
+		} else
+			pos.o = pos.l->len;
+	}
+	c_right(); /* FIXME need to goto position rather than move */
 	return pos;
 }
 
 Filepos /* move cursor to previous line */
 m_prevline(Filepos pos){
-	if( ! pos.l || ! pos.l->p )
+	if( ! pos.l || ! pos.l->prev )
 		return pos;
-	pos.l = pos.l->p;
-	if( pos.o > pos.l->l )
-		pos.o = pos.l->l; /* FIXME check for going off end */
-	c_scrlu(); /* FIXME pline, up, or scrlu ? */
+	pos.l = pos.l->prev;
+	if( pos.o > pos.l->len )
+		pos.o = pos.l->len;
+	c_scrlu(); /* FIXME pline, up, or scrlu ?, also need to goto position rather than move */
 	return pos;
 }
 
 Filepos /* move cursor to next line */
 m_nextline(Filepos pos){
-	if( ! pos.l || ! pos.l->n )
+	if( ! pos.l || ! pos.l->next )
 		return pos;
-	pos.l = pos.l->n;
-	if( pos.o > pos.l->l )
-		pos.o = pos.l->l; /* FIXME check for going off end */
-	c_scrld(); /* FIXME nline, down, or scrld ? */
+	pos.l = pos.l->next;
+	if( pos.o > pos.l->len )
+		pos.o = pos.l->len;
+	c_scrld(); /* FIXME nline, down, or scrld ?, also need to goto position rather than move */
 	return pos;
 }
 
@@ -133,11 +142,11 @@ i_insert(const char *c, Filepos pos){
 		if( c[i] == '\n' ){
 			/* FIXME handle newline special case */
 		} else {
-			if( l->l >= (l->m * LINESIZE) ) /* FIXME need to take \0 at end of each string */
-				l->c = (char*)realloc(l->c, LINESIZE*(++(l->m)));
-			memmove(l->c+pos.o+1, l->c+pos.o, l->l - pos.o); /* FIXME check black magic */
+			if( l->len >= (l->mul * LINESIZE) ) /* FIXME need to take \0 at end of each string */
+				l->c = (char*)realloc(l->c, LINESIZE*(++(l->mul)));
+			memmove(l->c+pos.o+1, l->c+pos.o, l->len - pos.o); /* FIXME check black magic */
 			*(l->c+pos.o) = c[i];
-			l->d = true;
+			l->dirty = true;
 			/* FIXME need a \0 at the end of each string */
 		}
 	}
@@ -179,7 +188,7 @@ i_draw(void){
 	int i=0;
 	Line *l = vstart;
 	t_clear();
-	for( ; i<h && l; ++i, l=l->n)
+	for( ; i<h && l; ++i, l=l->next)
 		puts(l->c);
 
 	for( ; i<h-1; ++i)
@@ -229,16 +238,16 @@ main(int argc, char **argv){
 	/* FIXME testing data */
 	vstart = (Line *) malloc( sizeof(Line) );
 	vstart->c = "hello ";
-	vstart->l = 6;
-	vstart->n = (Line *) malloc( sizeof(Line) );
-	vstart->n->p = vstart;
-	vstart->n->c = "world";
-	vstart->n->l = 5;
-	vstart->n->n = (Line *) malloc(sizeof(Line) );
-	vstart->n->n->p = vstart->n;
-	vstart->n->n->c = "DUDE";
-	vstart->n->n->l = 4;
-	vend = vstart->n->n;
+	vstart->len = 6;
+	vstart->next = (Line *) malloc( sizeof(Line) );
+	vstart->next->prev = vstart;
+	vstart->next->c = "world";
+	vstart->next->len = 5;
+	vstart->next->next = (Line *) malloc(sizeof(Line) );
+	vstart->next->next->prev = vstart->next;
+	vstart->next->next->c = "DUDE";
+	vstart->next->next->len = 4;
+	vend = vstart->next->next;
 
 	cur.l = vstart;
 
