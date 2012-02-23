@@ -90,7 +90,6 @@ m_prevchar(Filepos pos){
 		} else
 			pos.o = 0;
 	}
-	c_left(); /* FIXME need to goto position rather than move */
 	return pos;
 }
 
@@ -105,7 +104,6 @@ m_nextchar(Filepos pos){
 		} else
 			pos.o = pos.l->len;
 	}
-	c_right(); /* FIXME need to goto position rather than move */
 	return pos;
 }
 
@@ -116,7 +114,6 @@ m_prevline(Filepos pos){
 	pos.l = pos.l->prev;
 	if( pos.o > pos.l->len )
 		pos.o = pos.l->len;
-	c_scrlu(); /* FIXME pline, up, or scrlu ?, also need to goto position rather than move */
 	return pos;
 }
 
@@ -127,7 +124,6 @@ m_nextline(Filepos pos){
 	pos.l = pos.l->next;
 	if( pos.o > pos.l->len )
 		pos.o = pos.l->len;
-	c_scrld(); /* FIXME nline, down, or scrld ?, also need to goto position rather than move */
 	return pos;
 }
 
@@ -169,7 +165,7 @@ i_setup(void){
 	tstate nstate = t_initstate(&orig);
 	t_setstate(&nstate);
 	t_clear();
-	f_default();
+	f_normal();
 	c_line0();
 }
 
@@ -178,7 +174,7 @@ i_tidyup(void){
 	t_setstate(&orig);
 	/* FIXME add back in post testing */
 	/*t_clear();
-		f_default();
+		f_normal();
 		c_line0(); */
 }
 

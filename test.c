@@ -26,7 +26,7 @@ int main(){
 
 	// prepare terminal
 	t_clear();
-	f_default();
+	f_normal();
 	c_line0();
 
 	//write(1, "hello\n", 6);
@@ -35,16 +35,20 @@ int main(){
 	int interactive = 0;
 
 	// testing
-	f_default();
+	f_normal();
+	b_red();
 	write(1, "hello ", 6);
 	f_blue();
 	write(1, "world", 5);
-	f_default();
+	f_normal();
+	
 	int h = t_getheight();
 	int i;
-	for( i=1; i<h; ++i )
+	for( i=1; i<h; ++i ){
 		printf("\n======");
-
+		if( i%2 ) b_blue();
+		//else b_green();
+	}
 	// main loop
 	while( alive ){
 		chs[0]=chs[1]=chs[2]=chs[3]=chs[4]=chs[5]=chs[6]=0;
@@ -55,11 +59,11 @@ int main(){
 		if( chs[0] == '!' )
 			break;
 		if( chs[0] == '@' ){
-			c_scrlu();
+			c_scrlu(1);
 			continue;
 		}
 		if( chs[0] == '#' ){
-			c_scrld();
+			c_scrld(1);
 			continue;
 		}
 		printf("%u %u %u %u %u %u %u\n", chs[0], chs[1], chs[2], chs[3], chs[4], chs[5], chs[6]);
@@ -72,6 +76,6 @@ int main(){
 	}
 	// tidy up a little
 	t_clear();
-	f_default();
+	f_normal();
 	c_line0();
 }

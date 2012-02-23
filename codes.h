@@ -22,18 +22,29 @@ int t_getheight(); /* get terminal height */
 int t_read(unsigned char *c, size_t len); /* request a read of up to len chars into c, will memset c to 0 first */
 
 /** Font operations, change colour/style of text following it **/
-int f_default();
+int f_normal();
 int f_bright();
+int f_black();
 int f_red();
 int f_green();
 int f_yellow();
 int f_blue();
 int f_magenta();
-int f_white();
-int f_black();
 int f_cyan();
+int f_white();
 int f_bold(); /* synonym for bright */
 int f_underline();
+
+/** Background operations, change colour of background following it **/
+int b_default();
+int b_black();
+int b_red();
+int b_green();
+int b_yellow();
+int b_blue();
+int b_magenta();
+int b_cyan();
+int b_white();
 
 /** Cursor operations **/
 int c_up();
@@ -46,8 +57,11 @@ int c_line0();
 int c_save();
 int c_restore();
 /*int c_scrle(); enable scrolling - needed? */
-int c_scrlu();
-int c_scrld();
+int c_moveu(); /* move cursor up a line, will add a line if at start of screen */
+int c_moved(); /* move cursor down a line, will add a line if at end of screen */
+/* scroll screen up or down by n lines */
+int c_scrlu(int n);
+int c_scrld(int n);
 int c_goto(int line, int pos);
 
 #endif
