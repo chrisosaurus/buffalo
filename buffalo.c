@@ -46,7 +46,7 @@ static char *curfile; /* current file name */
 
 /** Internal functions **/
 static Filepos i_insert(Filepos pos, const char *buf); /* insert buf at pos and return new filepos after the inserted char */
-static int i_utf8len(const unsigned char *c); /* return number of bytes of utf char c */
+static int i_utf8len(const char *c); /* return number of bytes of utf char c */
 static void i_setup(void); /* setup the terminal for editing */
 static void i_tidyup(void); /* clean up and return the terminal to it's original state */
 static void i_draw(void); /* draw lines from sstart until either the screen if full or we run out of lines */
@@ -148,29 +148,41 @@ i_insert(Filepos pos, const char *buf){
 			ln->next->prev = ln;
 			l->next = ln;
 			/* copy rest of line over, can call self recursively */
+            Filepos npos;
+            npos.l = ln;
+            npos.o = 0;
+            npos = i_insert(npos, &(l->c[pos.o]));
 			/* insert c followed by \0 */
+            l->c[pos.o] = c;
+            l->c[pos.o+1] = '\0';
+            /* FIXME check the insert pos offsets and the setting pos offset, off by one? */
 		} else {
 			if( l->len <= LINESIZE*l->mul ){
 				l->c = realloc(l->c, LINESIZE*(1+l->mul));
 				if( ! l->c ) ; /* FIXME failed to realloc */
 			}
 			/* memmove down the bus */
+            memmove( &(l->c[pos.o+1]), &(l->c[pos.o]), l->len-pos.o);
 			/* insert char */
+            l->c[pos.o] = c;
 			/* possibly make sure last char is \0, needed as testing if we are appending is more expensive than just doing */
+            l->c[l->len+1] = '\0';
 			/* mark dirty */
+            l->dirty = true;
 			/* correct len */
+            /* FIXME need to correct lens and check every pos.o and l->len offset for off by ones */
 		}
 	}
 	return pos; /* FIXME should point at last char inserted*/
 }
 
 int /* return number of bytes of utf char c */
-i_utf8len(const unsigned char *c){
-	if( *c >= 0xFC ) return 6;
-	if( *c >= 0xF8 ) return 5;
-	if( *c >= 0xF0 ) return 4;
-	if( *c >= 0xE0 ) return 3;
-	if( *c >= 0xC0 ) return 2;
+i_utf8len(const char *c){
+	if( (unsigned char)*c >= 0xFC ) return 6;
+	if( (unsigned char)*c >= 0xF8 ) return 5;
+	if( (unsigned char)*c >= 0xF0 ) return 4;
+	if( (unsigned char)*c >= 0xE0 ) return 3;
+	if( (unsigned char)*c >= 0xC0 ) return 2;
 	return 1;
 }
 
@@ -215,7 +227,7 @@ i_ndraw(void){
 	Line *l;
 	int row, col, i;
 	for(l=fstart, row=0; l && l != cur.l; l=l->next, ++row) ;
-	for(i=0, col=0; i < cur.o; i += i_utf8len(cur.l->c[i]), ++col) ;
+	for(i=0, col=0; i < cur.o; i += i_utf8len(&(cur.l->c[i])), ++col) ;
 	/* we now have col and row that we can goto :) */
 }
 
@@ -253,7 +265,7 @@ int /* the magic main function */
 main(int argc, char **argv){
 	int i;
 	int running=1; /* set to false to stop, FIXME make into a naughty global later */
-	unsigned char ch[7]; /* characters to read into, 6 is maximum utf8 or terminal character.
+	char ch[7]; /* characters to read into, 6 is maximum utf8 or terminal character.
 													7th place adds a nice \0 onto the end */
 
 	i_setup();

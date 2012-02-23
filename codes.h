@@ -19,7 +19,7 @@ int t_setstate(const tstate *state); /* set state */
 int t_clear(); /* send clear code */
 int t_getwidth(); /* get terminal width */
 int t_getheight(); /* get terminal height */
-int t_read(unsigned char *c, size_t len); /* request a read of up to len chars into c, will memset c to 0 first */
+int t_read(char *c, size_t len); /* request a read of up to len chars into c, will memset c to 0 first */
 
 /** Font operations, change colour/style of text following it **/
 int f_normal();
