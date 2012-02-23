@@ -1,6 +1,6 @@
 ----- ------ ----- ------ -----  ----- ------ ----- ------ -----
 quit  write                            SOF    uscr  EOF         
-             edit         smk          SOL    uchr  EOL         
+             edit  run    smk          SOL    uchr  EOL         
 ----- ------ ----- ------ -----  ----- ------ ----- ------ -----
       paste  del          g&smk  \nbf  lwrd   dscr  rwrd        
       sel    cut   search gmk    \naf  lchr   dchar rchar       
@@ -23,3 +23,4 @@ lwrd/rwrd moving by word/tokens (whitespace or non alphanumeric?)
 smk/gmk set/goto mark
 g&smk goto mark and then set at old pos
 edit open a new file (name in selection or type name? )
+run runs command in current with selection as its stdin, inserting at pos and removing current

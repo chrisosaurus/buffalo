@@ -75,4 +75,4 @@ int c_scrld(){ return write(1, "D", 2); }
 /* scrlu will move the curs up a line, scrld down. if at edge of screen will keep going, inserting blank lines if needed
  * up and down will not insert blank lines
  * CSI n S and CSI n T will scroll the page about the cursor, up or down, and will also insert blank lines if needed */
-int c_goto(int line, int off){ char c[10]; sprintf(c, "%c[%d;%dH", 0x1b, line, off); return write(1, c, strlen(c)); }
+int c_goto(int line, int off){ char c[10]; snprintf(c, 10, "%c[%d;%dH", 0x1b, line, off); return write(1, c, strlen(c)); }
