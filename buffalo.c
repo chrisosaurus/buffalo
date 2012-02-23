@@ -39,17 +39,17 @@ typedef struct { /* key binding */
 
 /* Naughty global variables */
 static Line *fstart=0, *fend=0; /* first and last lines */
-static Line *vstart=0, *vend=0; /* first and last lines on screen */
+static Line *sstart=0, *send=0; /* first and last lines on screen */
 static Filepos cur = { 0, 0 }; /* current position in file */
 static tstate orig; /* original terminal state */
 static char *curfile; /* current file name */
 
 /** Internal functions **/
-static Filepos i_insert(const char *c, Filepos pos); /* insert c at pos and return new filepos after the inserted char */
+static Filepos i_insert(Filepos pos, const char *buf); /* insert buf at pos and return new filepos after the inserted char */
 static int i_utf8len(const unsigned char *c); /* return number of bytes of utf char c */
 static void i_setup(void); /* setup the terminal for editing */
 static void i_tidyup(void); /* clean up and return the terminal to it's original state */
-static void i_draw(void); /* draw lines from vstart until either the screen if full or we run out of lines */
+static void i_draw(void); /* draw lines from sstart until either the screen if full or we run out of lines */
 static int i_loadfile(char *fname); /* initialise data structure and read in file */
 
 /** Movement functions **/
@@ -129,24 +129,28 @@ m_nextline(Filepos pos){
 
 /* internal function definitions */
 Filepos /* insert c at post and return new filepos after the inserted char */
-i_insert(const char *c, Filepos pos){
+i_insert(Filepos pos, const char *buf){
 	int i;
 	Line *l=pos.l, *ln=0;
-	for( i=0; c[i] != '\0'; ++i ){
-		/* FIXME handle actual copying, newlines are a special case */
-		/* FIXME handle reallocation if necessary */
-		if( c[i] == '\n' ){
-			/* FIXME handle newline special case */
+	char c;
+	for( i=0; buf[i] != '\0'; c=buf[++i] ){
+		if( c == '\n' || c == '\r' ){
+			/*make new line */
+			/* fix p/n line pointers */
+			/* copy rest of line over */
+			/* insert c followed by \0 */
 		} else {
-			if( l->len >= (l->mul * LINESIZE) ) /* FIXME need to take \0 at end of each string */
-				l->c = (char*)realloc(l->c, LINESIZE*(++(l->mul)));
-			memmove(l->c+pos.o+1, l->c+pos.o, l->len - pos.o); /* FIXME check black magic */
-			*(l->c+pos.o) = c[i];
-			l->dirty = true;
-			/* FIXME need a \0 at the end of each string */
+			if( l->len <= LINESIZE*l->mul ){
+				l->c = realloc(l->c, LINESIZE*(1+l->mul));
+				if( ! l->c ) ; /* FIXME failed to realloc */
+			}
+			/* memmove down the bus */
+			/* insert char */
+			/* possibly make sure last char is \0, needed as testing if we are appending is more expensive than just doing */
+			/* mark dirty */
 		}
 	}
-	return pos; /* FIXME */
+	return pos; /* FIXME should point at last char inserted*/
 }
 
 int /* return number of bytes of utf char c */
@@ -182,7 +186,7 @@ void
 i_draw(void){
 	int h = t_getheight();
 	int i=0;
-	Line *l = vstart;
+	Line *l = sstart;
 	t_clear();
 	for( ; i<h && l; ++i, l=l->next)
 		puts(l->c);
@@ -191,6 +195,17 @@ i_draw(void){
 		puts("");
 	c_line0();
 	//c_goto(0, cur.o); /* FIXME */
+}
+
+void /** FIXME actual draw operation **/
+i_ndraw(void){
+	/* check curs is on screen, need to go from firstine to start of screen and start of screen to end of line to verify, then move as appropriate */
+	/* once we know the curs is on the screen... */
+	Line *l;
+	int row, col, i;
+	for(l=fstart, row=0; l && l != cur.l; l=l->next, ++row) ;
+	for(i=0, col=0; i < cur.o; i += i_utf8len(cur.l->c[i]), ++col) ;
+	/* we now have col and row that we can goto :) */
 }
 
 int /* initialise data structure and read in file */
@@ -211,7 +226,7 @@ i_loadfile(char *fname){
 	if( (buf=calloc(1, BUFSIZ+1)) == 0 ) return -1; /* FIXME can't malloc */
 	while( (n=read(fd, buf, BUFSIZ)) > 0){
 		buf[n] = '\0';
-		cur = i_insert(buf, cur);
+		cur = i_insert(cur, buf);
 	}
 
 	if( fd != 0 )
@@ -232,20 +247,20 @@ main(int argc, char **argv){
 
 	i_setup();
 	/* FIXME testing data */
-	vstart = (Line *) malloc( sizeof(Line) );
-	vstart->c = "hello ";
-	vstart->len = 6;
-	vstart->next = (Line *) malloc( sizeof(Line) );
-	vstart->next->prev = vstart;
-	vstart->next->c = "world";
-	vstart->next->len = 5;
-	vstart->next->next = (Line *) malloc(sizeof(Line) );
-	vstart->next->next->prev = vstart->next;
-	vstart->next->next->c = "DUDE";
-	vstart->next->next->len = 4;
-	vend = vstart->next->next;
+	sstart = (Line *) malloc( sizeof(Line) );
+	sstart->c = "hello ";
+	sstart->len = 6;
+	sstart->next = (Line *) malloc( sizeof(Line) );
+	sstart->next->prev = sstart;
+	sstart->next->c = "world";
+	sstart->next->len = 5;
+	sstart->next->next = (Line *) malloc(sizeof(Line) );
+	sstart->next->next->prev = sstart->next;
+	sstart->next->next->c = "DUDE";
+	sstart->next->next->len = 4;
+	send = sstart->next->next;
 
-	cur.l = vstart;
+	cur.l = sstart;
 
 	i_draw();
 	while( running ){
