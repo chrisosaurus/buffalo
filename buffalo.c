@@ -135,9 +135,19 @@ i_insert(Filepos pos, const char *buf){
 	char c;
 	for( i=0; buf[i] != '\0'; c=buf[++i] ){
 		if( c == '\n' || c == '\r' ){
-			/*make new line */
-			/* fix p/n line pointers */
-			/* copy rest of line over */
+			ln = (Line *) malloc(sizeof(Line));
+			if( ! ln ) ; /* FIXME failed to malloc */
+			ln->c = (char *) calloc(sizeof(char), LINESIZE * l->mul);
+			if( ! ln->c ) ; /* FIXME failed to calloc */
+			ln->mul = l->mul;
+			ln->len = 0; /* FIXME, handled in recursion? */
+			ln->dirty = true;
+			/* correct pointers */
+			ln->prev = l;
+			ln->next = l->next;
+			ln->next->prev = ln;
+			l->next = ln;
+			/* copy rest of line over, can call self recursively */
 			/* insert c followed by \0 */
 		} else {
 			if( l->len <= LINESIZE*l->mul ){
@@ -148,6 +158,7 @@ i_insert(Filepos pos, const char *buf){
 			/* insert char */
 			/* possibly make sure last char is \0, needed as testing if we are appending is more expensive than just doing */
 			/* mark dirty */
+			/* correct len */
 		}
 	}
 	return pos; /* FIXME should point at last char inserted*/
