@@ -51,6 +51,7 @@ static void i_setup(void); /* setup the terminal for editing */
 static void i_tidyup(void); /* clean up and return the terminal to it's original state */
 static void i_draw(void); /* draw lines from sstart until either the screen if full or we run out of lines */
 static int i_loadfile(char *fname); /* initialise data structure and read in file */
+static void i_die(char *c); /* reset terminal, print c to stderr and exit */
 
 /** Movement functions **/
 static Filepos m_startofline(Filepos pos);
@@ -127,50 +128,53 @@ m_nextline(Filepos pos){
 	return pos;
 }
 
+void /* reset terminal, print error, and exit */
+i_die(char *c){
+	i_tidyup();
+	fputs(c, stderr);
+	exit(1);
+}
+
 /* internal function definitions */
 Filepos /* insert c at post and return new filepos after the inserted char */
 i_insert(Filepos pos, const char *buf){
 	int i;
 	Line *l=pos.l, *ln=0;
 	char c;
-	for( i=0; buf[i] != '\0'; c=buf[++i] ){
+	for( i=0, c=buf[0]; buf[i] != '\0'; c=buf[++i] ){
 		if( c == '\n' || c == '\r' ){
-			ln = (Line *) malloc(sizeof(Line));
-			if( ! ln ) ; /* FIXME failed to malloc */
-			ln->c = (char *) calloc(sizeof(char), LINESIZE * l->mul);
-			if( ! ln->c ) ; /* FIXME failed to calloc */
+			if( ! (ln = (Line *) malloc(sizeof(Line))) ) i_die("failed to malloc in insert");
+			if( ! (ln->c = (char *) calloc(sizeof(char), LINESIZE * l->mul)) ) i_die("failed to calloc in insert");
 			ln->mul = l->mul;
-			ln->len = 0; /* FIXME, handled in recursion? */
+			ln->len = 0;
 			ln->dirty = true;
 			/* correct pointers */
 			ln->prev = l;
 			ln->next = l->next;
-			ln->next->prev = ln;
+			if( ln->next )
+				ln->next->prev = ln;
 			l->next = ln;
 			/* copy rest of line over, can call self recursively */
-            Filepos npos;
-            npos.l = ln;
-            npos.o = 0;
-            npos = i_insert(npos, &(l->c[pos.o]));
+			i_insert((Filepos){ln, 0}, &(l->c[pos.o]));
 			/* insert c followed by \0 */
-            l->c[pos.o] = c;
-            l->c[pos.o+1] = '\0';
-            /* FIXME check the insert pos offsets and the setting pos offset, off by one? */
+			l->c[pos.o] = c;
+			l->c[pos.o+1] = '\0';
+			/* actually pos has to be the character after the \n, as in the first char off the new line */
+			pos = (Filepos){ln, 0};
 		} else {
-			if( l->len <= LINESIZE*l->mul ){
-				l->c = realloc(l->c, LINESIZE*(1+l->mul));
-				if( ! l->c ) ; /* FIXME failed to realloc */
-			}
+			if( l->len <= LINESIZE*l->mul )
+				if( ! (l->c = realloc(l->c, LINESIZE*(++l->mul))) ) i_die("failed to realloc in insert");
 			/* memmove down the bus */
-            memmove( &(l->c[pos.o+1]), &(l->c[pos.o]), l->len-pos.o);
+			if( ! memmove( &(l->c[pos.o+1]), &(l->c[pos.o]), l->len-pos.o) ) i_die("failed to memmove in insert");
 			/* insert char */
-            l->c[pos.o] = c;
+			l->c[pos.o] = c;
 			/* possibly make sure last char is \0, needed as testing if we are appending is more expensive than just doing */
-            l->c[l->len+1] = '\0';
+			l->c[l->len+1] = '\0';
 			/* mark dirty */
-            l->dirty = true;
+			l->dirty = true;
 			/* correct len */
-            /* FIXME need to correct lens and check every pos.o and l->len offset for off by ones */
+			++l->len;
+			++pos.o;
 		}
 	}
 	return pos; /* FIXME should point at last char inserted*/
@@ -237,16 +241,25 @@ i_loadfile(char *fname){
 	char *buf=0;
 	ssize_t n;
 
+	if( ! cur.o ){
+		/* initialise data structure */
+		if( ! (fstart = (Line*) malloc(sizeof(Line))) ) i_die("failed to malloc in loadfile");
+		fend = fstart;
+		cur.l = fstart;
+		cur.o = 0;
+		sstart = fstart;
+		send = fstart;
+	}
 
 	if( fname == 0 || fname[0] == '-' )
 		fd = 0;
 	else{
 		if( (fd=open(fname, O_RDONLY)) == -1 )
-			return -1; /* FIXME can't open file */
+			i_die("failed to open file in loadfile");
 		curfile = strcpy(malloc(strlen(fname) + 1), fname);
 	}
 
-	if( (buf=calloc(1, BUFSIZ+1)) == 0 ) return -1; /* FIXME can't malloc */
+	if( (buf=calloc(1, BUFSIZ+1)) == 0 ) i_die("failed to calloc in loadfile");
 	while( (n=read(fd, buf, BUFSIZ)) > 0){
 		buf[n] = '\0';
 		cur = i_insert(cur, buf);
@@ -266,24 +279,12 @@ main(int argc, char **argv){
 	int i;
 	int running=1; /* set to false to stop, FIXME make into a naughty global later */
 	char ch[7]; /* characters to read into, 6 is maximum utf8 or terminal character.
-													7th place adds a nice \0 onto the end */
+								 7th place adds a nice \0 onto the end */
 
 	i_setup();
-	/* FIXME testing data */
-	sstart = (Line *) malloc( sizeof(Line) );
-	sstart->c = "hello ";
-	sstart->len = 6;
-	sstart->next = (Line *) malloc( sizeof(Line) );
-	sstart->next->prev = sstart;
-	sstart->next->c = "world";
-	sstart->next->len = 5;
-	sstart->next->next = (Line *) malloc(sizeof(Line) );
-	sstart->next->next->prev = sstart->next;
-	sstart->next->next->c = "DUDE";
-	sstart->next->next->len = 4;
-	send = sstart->next->next;
 
-	cur.l = sstart;
+	if( argc > 1 )
+		i_loadfile(argv[1]);
 
 	i_draw();
 	while( running ){
