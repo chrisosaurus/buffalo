@@ -147,25 +147,29 @@ i_insert(Filepos pos, const char *buf){
 			if( ! (ln->c = (char *) calloc(sizeof(char), LINESIZE * l->mul)) ) i_die("failed to calloc in insert");
 			ln->mul = l->mul;
 			ln->len = 0;
+			ln->c[0] = '\0';
 			ln->dirty = true;
 			/* correct pointers */
 			ln->prev = l;
 			ln->next = l->next;
-			if( ln->next )
-				ln->next->prev = ln;
+			if( l->next )
+				l->next->prev = ln;
 			l->next = ln;
 			/* copy rest of line over, can call self recursively */
-			i_insert((Filepos){ln, 0}, &(l->c[pos.o]));
+			if( pos.o < l->len )
+				i_insert((Filepos){ln, 0}, &(l->c[pos.o]));
 			/* insert c followed by \0 */
 			l->c[pos.o] = c;
 			l->c[pos.o+1] = '\0';
-			/* actually pos has to be the character after the \n, as in the first char off the new line */
-			pos = (Filepos){ln, 0};
+			/* actually pos has to be the character after the \n, as in the first char of the new line */
+			l = ln;
+			pos = (Filepos){l, 0};
 		} else {
-			if( l->len <= LINESIZE*l->mul )
+			if( l->len+2 >= LINESIZE*l->mul )
 				if( ! (l->c = realloc(l->c, LINESIZE*(++l->mul))) ) i_die("failed to realloc in insert");
 			/* memmove down the bus */
-			if( ! memmove( &(l->c[pos.o+1]), &(l->c[pos.o]), l->len-pos.o) ) i_die("failed to memmove in insert");
+			if( pos.o < l->len )
+				if( ! memmove( &(l->c[pos.o+1]), &(l->c[pos.o]), l->len-pos.o) ) i_die("failed to memmove in insert");
 			/* insert char */
 			l->c[pos.o] = c;
 			/* possibly make sure last char is \0, needed as testing if we are appending is more expensive than just doing */
@@ -203,10 +207,9 @@ i_setup(void){
 void
 i_tidyup(void){
 	t_setstate(&orig);
-	/* FIXME add back in post testing */
-	/*t_clear();
-		f_normal();
-		c_line0(); */
+	t_clear();
+	f_normal();
+	c_line0();
 }
 
 void
@@ -215,10 +218,10 @@ i_draw(void){
 	int i=0;
 	Line *l = sstart;
 	t_clear();
-	for( ; i<h && l; ++i, l=l->next)
-		puts(l->c);
+	for( ; i<(h-1) && l; ++i, l=l->next)
+		fputs(l->c, stdout);
 
-	for( ; i<h-1; ++i)
+	for( ; i<(h-1); ++i)
 		puts("");
 	c_line0();
 	//c_goto(0, cur.o); /* FIXME */
@@ -244,6 +247,10 @@ i_loadfile(char *fname){
 	if( ! cur.o ){
 		/* initialise data structure */
 		if( ! (fstart = (Line*) malloc(sizeof(Line))) ) i_die("failed to malloc in loadfile");
+		if( ! (fstart->c = (char*) calloc(LINESIZE, sizeof(char))) ) i_die("failed to malloc in loadfile");
+		fstart->mul = 0;
+		fstart->len = 0;
+		fstart->c[0] = '\0';
 		fend = fstart;
 		cur.l = fstart;
 		cur.o = 0;
