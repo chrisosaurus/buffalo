@@ -219,26 +219,6 @@ i_tidyup(void){
 	c_line0();
 }
 
-void
-i_olddraw(void){ /* FIXME kept for reference purposes */
-	int h = t_getheight();
-	int i=0;
-	Line *l = sstart;
-	t_clear();
-	for( ; i<(h-1) && l; ++i, l=l->next)
-		fputs(l->c, stdout);
-	if( i == h-1 )
-		write(1, l->c, l->len); /* FIXME a little ugly, but we dont want a trailing \n for last line*/
-	/* FIXME if we always reset to the top of the screen (hint, we do) then we dont need anything trailing
-	for( ; i<h; ++i)
-		puts("");
-	write(1, "hello", 5);
-	*/
-	/*fflush(stdout); FIXME consider what to do with this, could mean we could use buffered output and then flush */
-	c_line0();
-	//c_goto(0, cur.o); /* FIXME */
-}
-
 void /** FIXME actual draw operation **/
 i_draw(void){
 	int h = t_getheight();
@@ -264,16 +244,6 @@ i_draw(void){
 	/* find cursor column */
 	for(i=0, ccol=0; i < cur.o; i += i_utf8len(&(cur.l->c[i])), ++ccol) ;
 	c_goto(crow+1, ccol+1); /* FIXME should I move this elsewhere */
-	
-	/* check curs is on screen, need to go from firstine to start of screen and start of screen to end of line to verify, then move as appropriate */
-	/* once we know the curs is on the screen... */
-	/* FIXME here for reference purposes
-	Line *l;
-	int row, col, i;
-	for(l=fstart, row=0; l && l != cur.l; l=l->next, ++row) ;
-	for(i=0, col=0; i < cur.o; i += i_utf8len(&(cur.l->c[i])), ++col) ;
-	we now have col and row that we can goto :)
-	*/
 }
 
 int /* initialise data structure and read in file */
@@ -323,8 +293,7 @@ int /* the magic main function */
 main(int argc, char **argv){
 	int i;
 	int running=1; /* set to false to stop, FIXME make into a naughty global later */
-	char ch[7]; /* characters to read into, 6 is maximum utf8 or terminal character.
-								 7th place adds a nice \0 onto the end */
+	char ch[7]; /* 6 is maximum len of utf8, 7th adds a nice \0 FIXME but it this needed? */
 
 	i_setup();
 
@@ -334,10 +303,6 @@ main(int argc, char **argv){
 	while( running ){
 		i_draw();
 		t_read(ch, 7);
-		if( ch[0] == 'a' )
-			write(1, "a", 1);
-		else if( ch[0] == '\n' )
-			write(1, "\n", 1);
 		if( i_utf8len(ch) > 1 ){
 			/* FIXME have fun inserting me */
 		} else if( ch[0] == 0x1B ){ /* FIXME change to constant to support CONTROL */
