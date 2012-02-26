@@ -263,7 +263,7 @@ i_draw(void){
 
 	/* find cursor column */
 	for(i=0, ccol=0; i < cur.o; i += i_utf8len(&(cur.l->c[i])), ++ccol) ;
-	c_goto(crow, ccol);
+	c_goto(crow+1, ccol+1); /* FIXME should I move this elsewhere */
 	
 	/* check curs is on screen, need to go from firstine to start of screen and start of screen to end of line to verify, then move as appropriate */
 	/* once we know the curs is on the screen... */
