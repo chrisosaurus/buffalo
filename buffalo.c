@@ -236,7 +236,7 @@ i_draw(void){
 		fputs(l->c, stdout);
 	}
 	if( i == h-1 ){
-			write(1, l->c, l->len);
+			write(1, l->c, l->len); /* FIXME ideally we should get rid of this in favour of buffered */
 			if( l == cur.l )
 				crow = h;
 	}
@@ -244,6 +244,7 @@ i_draw(void){
 	/* find cursor column */
 	for(i=0, ccol=0; i < cur.o; i += i_utf8len(&(cur.l->c[i])), ++ccol) ;
 	c_goto(crow+1, ccol+1); /* FIXME should I move this elsewhere */
+    fflush(stdout); /* FIXME need to add a note to codes about how fflush-ing is needed */
 }
 
 int /* initialise data structure and read in file */

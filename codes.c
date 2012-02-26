@@ -23,7 +23,7 @@ int t_setstate(const tstate *state){
 	return 0;
 }
 
-int t_clear(){ return write(1, "[2J", 4 ); }
+int t_clear(){ return fputs("[2J", stdout ); }
 int t_getwidth(){
 	/* do I need to take TCIOCGSIZE into account? if so http://www.linuxquestions.org/questions/programming-9/get-width-height-of-a-terminal-window-in-c-810739/ */
 	struct winsize ts;
@@ -45,47 +45,47 @@ int t_read(char *c, size_t len){
 
 
 /** Font operations **/
-int f_normal(){ return write(1, "[0m", 4 ); }
-int f_bright(){ return write(1, "[1m", 4); }
-int f_black(){ return write(1, "[30m", 5 ); }
-int f_red(){ return write(1, "[31m", 5 ); }
-int f_green(){ return write(1, "[32m", 5 ); }
-int f_yellow(){ return write(1, "[33m", 5 ); }
-int f_blue(){ return write(1, "[34m", 5 ); }
-int f_magenta(){ return write(1, "[35m", 5 ); }
-int f_cyan(){ return write(1, "[36m", 5 ); }
-int f_white(){ return write(1, "[37m", 5 ); }
-int f_bold(){ return write(1, "[1m", 4); }
-int f_underline(){ return write(1, "[4m", 4); }
+int f_normal(){ return fputs("[0m", stdout ); }
+int f_bright(){ return fputs("[1m", stdout); }
+int f_black(){ return fputs("[30m", stdout ); }
+int f_red(){ return fputs("[31m", stdout ); }
+int f_green(){ return fputs("[32m", stdout ); }
+int f_yellow(){ return fputs("[33m", stdout ); }
+int f_blue(){ return fputs("[34m", stdout ); }
+int f_magenta(){ return fputs("[35m", stdout ); }
+int f_cyan(){ return fputs("[36m", stdout ); }
+int f_white(){ return fputs("[37m", stdout ); }
+int f_bold(){ return fputs("[1m", stdout); }
+int f_underline(){ return fputs("[4m", stdout); }
 
 /** Background colours **/
-int b_default(){ return write(1, "[49m", 5); }
-int b_black(){ return write(1, "[40m", 5); }
-int b_red(){ return write(1, "[41m", 5); }
-int b_green(){ return write(1, "[42m", 5); }
-int b_yellow(){ return write(1, "[43m", 5); }
-int b_blue(){ return write(1, "[44m", 5); }
-int b_magenta(){ return write(1, "[45m", 5); }
-int b_cyan(){ return write(1, "[46m", 5); }
-int b_white(){ return write(1, "[47m", 5); }
+int b_default(){ return fputs("[49m", stdout); }
+int b_black(){ return fputs("[40m", stdout); }
+int b_red(){ return fputs("[41m", stdout); }
+int b_green(){ return fputs("[42m", stdout); }
+int b_yellow(){ return fputs("[43m", stdout); }
+int b_blue(){ return fputs("[44m", stdout); }
+int b_magenta(){ return fputs("[45m", stdout); }
+int b_cyan(){ return fputs("[46m", stdout); }
+int b_white(){ return fputs("[47m", stdout); }
 
 /** Cursor operations **/
-int c_up(){ return write(1, "[A", 3); }
-int c_down(){ return write(1, "[B", 3); }
-int c_right(){ return write(1, "[C", 3); }
-int c_left(){ return write(1, "[D", 3); }
-int c_nline(){ return write(1, "[E", 3); }
-int c_pline(){ return write(1, "[F", 3); }
-int c_line0(){ return write(1, "[0;0H", 6); }
-int c_save(){ return write(1, "[s", 3); }
-int c_enscrl(){ return write(1, "", 3); }
-int c_restore(){ return write(1, "[u", 3); }
-/*int c_scrle(){ return write(1, "[r", 3); } */
-int c_moveu(){ return write(1, "M", 2); }
-int c_moved(){ return write(1, "D", 2); }
+int c_up(){ return fputs("[A", stdout); }
+int c_down(){ return fputs("[B", stdout); }
+int c_right(){ return fputs("[C", stdout); }
+int c_left(){ return fputs("[D", stdout); }
+int c_nline(){ return fputs("[E", stdout); }
+int c_pline(){ return fputs("[F", stdout); }
+int c_line0(){ return fputs("[0;0H", stdout); }
+int c_save(){ return fputs("[s", stdout); }
+int c_enscrl(){ return fputs("", stdout); }
+int c_restore(){ return fputs("[u", stdout); }
+/*int c_scrle(){ return fputs("[r", stdout); } */
+int c_moveu(){ return fputs("M", stdout); }
+int c_moved(){ return fputs("D", stdout); }
 /* scrlu will move the curs up a line, scrld down. if at edge of screen will keep going, inserting blank lines if needed
  * up and down will not insert blank lines
  * CSI n S and CSI n T will scroll the page about the cursor, up or down, and will also insert blank lines if needed */
-int c_scrlu(int n){ char c[6]; snprintf(c, 6, "%c[%dS", 0x1b, n); return write(1, c, strlen(c)); }
-int c_scrld(int n){ char c[6]; snprintf(c, 6, "%c[%dT", 0x1b, n); return write(1, c, strlen(c)); }
-int c_goto(int line, int off){ char c[10]; snprintf(c, 10, "%c[%d;%dH", 0x1b, line, off); return write(1, c, strlen(c)); }
+int c_scrlu(int n){ char c[6]; snprintf(c, 6, "%c[%dS", 0x1b, n); return fputs(c, stdout); }
+int c_scrld(int n){ char c[6]; snprintf(c, 6, "%c[%dT", 0x1b, n); return fputs(c, stdout); }
+int c_goto(int line, int off){ char c[10]; snprintf(c, 10, "%c[%d;%dH", 0x1b, line, off); return fputs(c, stdout); }
