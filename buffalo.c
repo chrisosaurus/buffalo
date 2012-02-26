@@ -69,6 +69,7 @@ static Filepos m_nextscreen(Filepos pos);
 
 /** Functions to bind to a key **/
 static void f_cur(const Arg *arg); /* call arg.func(cur) and set cur to return value */
+static void f_quit(const Arg *arg); /* ignored arg, tidyup and quit */
 
 
 #include "config.h"
@@ -77,6 +78,12 @@ static void f_cur(const Arg *arg); /* call arg.func(cur) and set cur to return v
 void /* run the Arg with the current cursor position */
 f_cur(const Arg *arg){
 	cur = arg->m_func(cur);
+}
+
+void /* tidyup and quit */
+f_quit(const Arg *arg){
+	i_tidyup();
+	exit(0);
 }
 
 /* Movement functions definitions */
@@ -213,7 +220,7 @@ i_tidyup(void){
 }
 
 void
-i_draw(void){
+i_olddraw(void){ /* FIXME kept for reference purposes */
 	int h = t_getheight();
 	int i=0;
 	Line *l = sstart;
@@ -233,14 +240,39 @@ i_draw(void){
 }
 
 void /** FIXME actual draw operation **/
-i_ndraw(void){
+i_draw(void){
+	int h = t_getheight();
+	int i=0;
+	int crow=0, ccol=0;
+
+	t_clear();
+
+	/* FIXME force cursor to be on screen, TODO work out if we can calculate crow and ccol here */
+	Line *l = sstart;
+	for( ; i<(h-1) && l; ++i, l=l->next ){
+		if( l == cur.l )
+			crow = i;
+		fputs(l->c, stdout);
+	}
+	if( i == h-1 ){
+			write(1, l->c, l->len);
+			if( l == cur.l )
+				crow = h;
+	}
+
+	/* find cursor column */
+	for(i=0, ccol=0; i < cur.o; i += i_utf8len(&(cur.l->c[i])), ++ccol) ;
+	c_goto(crow, ccol);
+	
 	/* check curs is on screen, need to go from firstine to start of screen and start of screen to end of line to verify, then move as appropriate */
 	/* once we know the curs is on the screen... */
+	/* FIXME here for reference purposes
 	Line *l;
 	int row, col, i;
 	for(l=fstart, row=0; l && l != cur.l; l=l->next, ++row) ;
 	for(i=0, col=0; i < cur.o; i += i_utf8len(&(cur.l->c[i])), ++col) ;
-	/* we now have col and row that we can goto :) */
+	we now have col and row that we can goto :)
+	*/
 }
 
 int /* initialise data structure and read in file */
@@ -301,9 +333,7 @@ main(int argc, char **argv){
 	i_draw();
 	while( running ){
 		t_read(ch, 7);
-		if( ch[0] == '!' )
-			running=0;
-		else if( ch[0] == 'a' )
+		if( ch[0] == 'a' )
 			write(1, "a", 1);
 		else if( ch[0] == '\n' )
 			write(1, "\n", 1);
