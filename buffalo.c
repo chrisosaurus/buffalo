@@ -220,9 +220,14 @@ i_draw(void){
 	t_clear();
 	for( ; i<(h-1) && l; ++i, l=l->next)
 		fputs(l->c, stdout);
-
-	for( ; i<(h-1); ++i)
+	if( i == h-1 )
+		write(1, l->c, l->len); /* FIXME a little ugly, but we dont want a trailing \n for last line*/
+	/* FIXME if we always reset to the top of the screen (hint, we do) then we dont need anything trailing
+	for( ; i<h; ++i)
 		puts("");
+	write(1, "hello", 5);
+	*/
+	/*fflush(stdout); FIXME consider what to do with this, could mean we could use buffered output and then flush */
 	c_line0();
 	//c_goto(0, cur.o); /* FIXME */
 }
