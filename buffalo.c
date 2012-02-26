@@ -246,6 +246,7 @@ i_draw(void){
 	int crow=0, ccol=0;
 
 	t_clear();
+	c_line0();
 
 	/* FIXME force cursor to be on screen, TODO work out if we can calculate crow and ccol here */
 	Line *l = sstart;
@@ -330,8 +331,8 @@ main(int argc, char **argv){
 	if( argc > 1 )
 		i_loadfile(argv[1]);
 
-	i_draw();
 	while( running ){
+		i_draw();
 		t_read(ch, 7);
 		if( ch[0] == 'a' )
 			write(1, "a", 1);
