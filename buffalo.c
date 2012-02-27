@@ -41,8 +41,10 @@ typedef struct { /* key binding */
 static Line *fstart=0, *fend=0; /* first and last lines */
 static Line *sstart=0, *send=0; /* first and last lines on screen */
 static Filepos cur = { 0, 0 }; /* current position in file */
+static Filepos sels = {0, 0}, sele = {0, 0}; /* start and end of selection */
 static tstate orig; /* original terminal state */
 static char *curfile; /* current file name */
+static int oldheight = 0; /* height last time we drew */
 
 /** Internal functions **/
 static Filepos i_insert(Filepos pos, const char *buf); /* insert buf at pos and return new filepos after the inserted char */
@@ -219,11 +221,10 @@ i_tidyup(void){
 	c_line0();
 }
 
-void /** FIXME actual draw operation **/
+void /* perform actual drawing to screen */
 i_draw(void){
-	int h = t_getheight();
-	int i=0;
-	int crow=0, ccol=0;
+	int nh = t_getheight();
+	int i=0, crow=0, ccol=0;
 
 	t_clear();
 	c_line0();
