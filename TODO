@@ -5,7 +5,6 @@ codes.* will eventually become its own library, maybe stw (simple termcode wrapp
 
 buffalo TODO:
 look at optimisation of printing, no point to print entire screen due to a simple cursor move (just goto if on screen)
-typing of text
 goto line
 saving
 

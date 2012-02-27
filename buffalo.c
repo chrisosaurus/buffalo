@@ -53,6 +53,7 @@ static void i_setup(void); /* setup the terminal for editing */
 static void i_tidyup(void); /* clean up and return the terminal to it's original state */
 static void i_draw(void); /* draw lines from sstart until either the screen if full or we run out of lines */
 static int i_loadfile(char *fname); /* initialise data structure and read in file */
+static int i_savefile(void); /* write the fstart to fend to the file named in curfile */
 static void i_die(char *c); /* reset terminal, print c to stderr and exit */
 
 /** Movement functions **/
@@ -231,15 +232,15 @@ i_draw(void){
 
 	/* FIXME force cursor to be on screen, TODO work out if we can calculate crow and ccol here */
 	Line *l = sstart;
-	for( ; i<(h-1) && l; ++i, l=l->next ){
+	for( ; i<(nh-1) && l; ++i, l=l->next ){
 		if( l == cur.l )
 			crow = i;
 		fputs(l->c, stdout);
 	}
-	if( i == h-1 ){
+	if( i == nh-1 ){
 			write(1, l->c, l->len); /* FIXME ideally we should get rid of this in favour of buffered */
 			if( l == cur.l )
-				crow = h;
+				crow = nh;
 	}
 
 	/* find cursor column */
@@ -291,6 +292,11 @@ i_loadfile(char *fname){
 	return 0;
 }
 
+int /* write fstart to fend to file named in curfile */
+i_savefile(void){
+    
+}
+
 int /* the magic main function */
 main(int argc, char **argv){
 	int i;
@@ -306,7 +312,7 @@ main(int argc, char **argv){
 		i_draw();
 		t_read(ch, 7);
 		if( i_utf8len(ch) > 1 ){
-			/* FIXME have fun inserting me */
+            cur = i_insert(cur, ch);
 		} else if( ch[0] == 0x1B ){ /* FIXME change to constant to support CONTROL */
 			for( i=0; i<LENGTH(keys); ++i )
 				if( memcmp( ch, keys[i].c, sizeof(keys[i].c)) == 0 ){
@@ -314,7 +320,7 @@ main(int argc, char **argv){
 					break;
 				}
 		} else { /* ascii character */
-			/* FIXME insert */
+            cur = i_insert(cur, ch);
 		}
 
 	}
