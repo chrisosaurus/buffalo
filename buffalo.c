@@ -248,11 +248,12 @@ i_draw(void){
 	/* find cursor column */
 	for(i=0, ccol=0; i < cur.o; i += i_utf8len(&(cur.l->c[i])), ++ccol) ;
 	c_goto(crow+1, ccol+1); /* FIXME should I move this elsewhere */
-    fflush(stdout); /* FIXME need to add a note to codes about how fflush-ing is needed */
+  fflush(stdout); /* FIXME need to add a note to codes about how fflush-ing is needed */
 }
 
 void /* perform drawing to screen, force cursor onto screen and handle higlighting and selection */
 i_ndraw(void){
+	/* FIXME this seems way more complex than it needs to be */
 	int nh = t_getheight();
 	int i=0, crow=0, ccol=0;
 	Line *l;
@@ -268,38 +269,54 @@ i_ndraw(void){
 	}
 	oldheight = nh;
 	
+	/* find cursor column */
+	for(i=0, ccol=0; i < cur.o; i += i_utf8len(&(cur.l->c[i])), ++ccol) ;
+
+	/* FIXME need to deal with case of initial drawing AND redrawing of every dirty line on screen (not just cursor)
+	 * can hopefully combine these two cases (initially every line is dirty ;)
+	 */
+
+	/* handle the three cases of cursor position; on screen, before screen, and after screen resp. */
 	for( l=sstart, i=0; l!=send; ++i ){
-		/* if we hit cur
-		 * goto line
-		 * set by col
-		 * draw line
-		 * set back col
-		 * return & flush
-		 * */	
+		if( l == cur.l ){
+			c_goto(i, 0);
+			b_blue();
+			fputs(stdout, l->c);
+			b_default();
+			c_goto(i, 0);
+			fflush(stdout);
+			return;
+		}
 	}
 	for( l=fstart, i=0; l!=sstart; ++i ){
-		/* if we hit cur
-		 *   if i > nh
-		 *     print lines such that h/2 is cur.l
-		 *  else
-		 *     scroll down by i
-		 *     goto sstart
-		 *     draw i line - draw first highlighted
-		 *  return & flush
-		 */
+		if( l == cur.l ){
+			if( i > nh ){
+				/*     print lines such that h/2 is cur.l */
+			} else {
+				 /*    scroll down by i
+				 *     goto sstart
+				 *     draw i line - draw first highlighted
+				 */
+			}
+			fflush(stdout);
+			return;
+		}
 	}
 	for( l=send, i=0; l!=fend; ++i ){
-		/* if we hit cur
-		 *   if i > nh
-		 *	   print lines such that h/2 is cur.l
-		 *	 else
-		 *	   scroll up by i
-		 *	   goto start
-		 *	   draw i lines - draw last highlighted
-		 * return & flush
-		 */
+		if( l == cur.l ){
+			if( i > nh ){
+				/*	   print lines such that h/2 is cur.l */
+			} else {
+			 /*	   scroll up by i
+			 *	   goto start
+			 *	   draw i lines - draw last highlighted
+			 */
+			}
+			fflush(stdout);
+			return;
+		}
 	}
-	/* FIXME we are so screwed */
+	i_die("got to impossible case in i_draw");
 }
 
 int /* initialise data structure and read in file */
@@ -318,8 +335,6 @@ i_loadfile(char *fname){
 		fend = fstart;
 		cur.l = fstart;
 		cur.o = 0;
-		sstart = fstart;
-		send = fstart;
 	}
 
 	if( fname == 0 || fname[0] == '-' )
@@ -347,7 +362,7 @@ i_loadfile(char *fname){
 
 int /* write fstart to fend to file named in curfile */
 i_savefile(void){
-    
+	/* write to <curfile>.tmp and then move to <curfile> */	
 }
 
 int /* the magic main function */
