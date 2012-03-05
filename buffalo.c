@@ -151,6 +151,8 @@ i_insert(Filepos pos, const char *buf){
 	int i;
 	Line *l=pos.l, *ln=0;
 	char c;
+	if( ! l )
+		return pos;
 	for( i=0, c=buf[0]; buf[i] != '\0'; c=buf[++i] ){
 		if( c == '\n' || c == '\r' ){
 			if( ! (ln = (Line *) malloc(sizeof(Line))) ) i_die("failed to malloc in insert");
@@ -247,6 +249,57 @@ i_draw(void){
 	for(i=0, ccol=0; i < cur.o; i += i_utf8len(&(cur.l->c[i])), ++ccol) ;
 	c_goto(crow+1, ccol+1); /* FIXME should I move this elsewhere */
     fflush(stdout); /* FIXME need to add a note to codes about how fflush-ing is needed */
+}
+
+void /* perform drawing to screen, force cursor onto screen and handle higlighting and selection */
+i_ndraw(void){
+	int nh = t_getheight();
+	int i=0, crow=0, ccol=0;
+	Line *l;
+	
+	if( nh > oldheight ){
+		for( i=nh=oldheight; i>0; --i )
+			if( send->next )
+				send = send->next; /* move send down */
+	} else if( nh < oldheight ){
+		for( i=oldheight-nh; i>0; --i )
+			if( send->prev )
+				send = send->prev; /* move send up */
+	}
+	oldheight = nh;
+	
+	for( l=sstart, i=0; l!=send; ++i ){
+		/* if we hit cur
+		 * goto line
+		 * set by col
+		 * draw line
+		 * set back col
+		 * return & flush
+		 * */	
+	}
+	for( l=fstart, i=0; l!=sstart; ++i ){
+		/* if we hit cur
+		 *   if i > nh
+		 *     print lines such that h/2 is cur.l
+		 *  else
+		 *     scroll down by i
+		 *     goto sstart
+		 *     draw i line - draw first highlighted
+		 *  return & flush
+		 */
+	}
+	for( l=send, i=0; l!=fend; ++i ){
+		/* if we hit cur
+		 *   if i > nh
+		 *	   print lines such that h/2 is cur.l
+		 *	 else
+		 *	   scroll up by i
+		 *	   goto start
+		 *	   draw i lines - draw last highlighted
+		 * return & flush
+		 */
+	}
+	/* FIXME we are so screwed */
 }
 
 int /* initialise data structure and read in file */
