@@ -238,9 +238,11 @@ i_draw(void){
 		if( l == cur.l )
 			crow = i;
 		fputs(l->c, stdout);
+		l->dirty = false;
 	}
 	if( i == nh-1 ){
 			write(1, l->c, l->len); /* FIXME ideally we should get rid of this in favour of buffered */
+			l->dirty = false;
 			if( l == cur.l )
 				crow = nh;
 	}
@@ -291,7 +293,8 @@ i_ndraw(void){
 	for( l=fstart, i=0; l!=sstart; ++i ){
 		if( l == cur.l ){
 			if( i > nh ){
-				/*     print lines such that h/2 is cur.l */
+				/* if i is greater than screen heights, scrolling wont save us anything, so have to redraw
+				 * print lines such that h/2 is cur.l */
 			} else {
 				 /*    scroll down by i
 				 *     goto sstart
@@ -305,7 +308,8 @@ i_ndraw(void){
 	for( l=send, i=0; l!=fend; ++i ){
 		if( l == cur.l ){
 			if( i > nh ){
-				/*	   print lines such that h/2 is cur.l */
+				/* if i is greater than screen heights, scrolling wont save us anything, so have to redraw
+				 * print lines such that h/2 is cur.l */
 			} else {
 			 /*	   scroll up by i
 			 *	   goto start

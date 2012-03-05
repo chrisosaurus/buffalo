@@ -37,18 +37,32 @@ int main(){
 	// testing
 	f_normal();
 	b_red();
-	write(1, "hello ", 6);
+	fputs("hello", stdout);
 	f_blue();
-	write(1, "world", 5);
+	fputs("world", stdout);
 	f_normal();
 	
 	int h = t_getheight();
 	int i;
-	for( i=1; i<h; ++i ){
-		printf("\n======");
+	for( i=1; i<h-3; ++i ){
+		fputs("\n======", stdout);
 		if( i%2 ) b_blue();
-		//else b_green();
+		else b_green();
 	}
+	fflush(stdout);
+
+	c_line0();
+	b_blue();
+	fputs("hehe", stdout);
+	fflush(stdout);
+	f_normal();
+	c_goto(20, 20);
+	if( tcsetattr(1, TCSANOW, &bkp) ){
+		perror("failed to reset termios setting back to the backup\n");
+		exit(1);
+	}
+	return 0;
+
 	// main loop
 	while( alive ){
 		chs[0]=chs[1]=chs[2]=chs[3]=chs[4]=chs[5]=chs[6]=0;
@@ -76,6 +90,6 @@ int main(){
 	}
 	// tidy up a little
 	t_clear();
-	f_normal();
 	c_line0();
+	f_normal();
 }
