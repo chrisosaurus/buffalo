@@ -232,6 +232,11 @@ i_draw(void){
 	t_clear();
 	c_line0();
 
+	if( ! sstart ){
+		sstart = fstart;
+		send = fend;
+	}
+
 	/* FIXME force cursor to be on screen, TODO work out if we can calculate crow and ccol here */
 	Line *l = sstart;
 	for( ; i<(nh-1) && l; ++i, l=l->next ){
@@ -260,6 +265,10 @@ i_ndraw(void){
 	int i=0, crow=0, ccol=0;
 	Line *l;
 	
+	/* FIXME need to handle initial set up for sstart and send, has to be done in here
+	 * currently sstart=fstart, send=fend (see i_draw) but this is wrong
+	 */
+
 	if( nh > oldheight ){
 		for( i=nh=oldheight; i>0; --i )
 			if( send->next )
