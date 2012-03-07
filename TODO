@@ -3,6 +3,9 @@ codes.* will eventually become its own library, maybe stw (simple termcode wrapp
 
 
 buffalo TODO:
+write off screen movement
+implement backspace and delete
+fix sstart->send range when a newline is inserted (could just ++oldheight?)
 goto line
 
 set / goto / goto&set mark
