@@ -286,7 +286,7 @@ i_draw(void){
 
 	/* if height has changed, correct the sstart->send range, marking any new additions as dirty */
 	if( nh > oldheight ){
-		for( i=nh=oldheight; i>0; --i )
+		for( i=nh-oldheight; i>0; --i )
 			if( send->next ){
 				send = send->next; /* move send down */
 				send->dirty = true;
@@ -307,17 +307,18 @@ i_draw(void){
 	for(i=0, ccol=0; i < cur.o; i += i_utf8len(&(cur.l->c[i])), ++ccol) ;
 
 	/* handle the three cases of cursor position; on screen, before screen, and after screen resp. */
-	for( l=sstart, i=0; l!=send && l->next; ++i, l=l->next ){
+	for( l=sstart, i=0; l!=send && l; ++i, l=l->next ){
 		if( l == cur.l ){
 			c_line0();
-			for( l=sstart; l!=send; l=l->next ){
+			for( l=sstart; l && l!=send; l=l->next ){
 				if( l == cur.l ){
 					c_goto(i, 0);
 					b_blue();
-					fputs(stdout, l->c);
+					l->c[l->len] = '\0';
+					fputs(l->c, stdout);
 					b_default();
 				} else if( l->dirty ){
-					fputs(stdout, l->c);
+					fputs(l->c, stdout);
 				} else {
 					c_nline();
 				}
