@@ -1,12 +1,9 @@
 codes TODO:
-consider using buffered ouput and fflush
 codes.* will eventually become its own library, maybe stw (simple termcode wrapper) 'stew'
 
 
 buffalo TODO:
-look at optimisation of printing, no point to print entire screen due to a simple cursor move (just goto if on screen)
 goto line
-saving
 
 set / goto / goto&set mark
 \n bf/af cur line

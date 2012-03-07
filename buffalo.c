@@ -1,4 +1,4 @@
-#include <stdbool.h> /* bool, true and false */
+#include <stdbool.h> /* bool, true, false */
 #include <stdlib.h> /* realloc, malloc, calloc */
 #include <string.h> /* memmove, strlen, strcpy */
 #include <unistd.h> /* write */
@@ -286,13 +286,13 @@ i_draw(void){
 
 	/* if height has changed, correct the sstart->send range, marking any new additions as dirty */
 	if( nh > oldheight ){
-		for( i=nh-oldheight; i>0; --i )
+		for( i=nh-oldheight; i>1; --i )
 			if( send->next ){
 				send = send->next; /* move send down */
 				send->dirty = true;
 			}
 	} else if( nh < oldheight ){
-		for( i=oldheight-nh; i>0; --i )
+		for( i=oldheight-nh; i>1; --i )
 			if( send->prev )
 				send = send->prev; /* move send up */
 	}
@@ -304,23 +304,22 @@ i_draw(void){
 	oldwidth = nw;
 	
 	/* find cursor column */
-	for(i=0, ccol=0; i < cur.o; i += i_utf8len(&(cur.l->c[i])), ++ccol) ;
+	for(i=0, ccol=1; i < cur.o; i += i_utf8len(&(cur.l->c[i])), ++ccol) ;
 
 	/* handle the three cases of cursor position; on screen, before screen, and after screen resp. */
-	for( l=sstart, i=0; l!=send && l; ++i, l=l->next ){
+	for( l=sstart, i=1; l!=send && l; ++i, l=l->next ){
 		if( l == cur.l ){
 			c_line0();
-			for( l=sstart; l && l!=send; l=l->next ){
+			for( l=sstart; l&&l!=send; l=l->next ){
 				if( l == cur.l ){
-					c_goto(i, 0);
+					/*c_goto(i, 0);*/
 					b_blue();
-					l->c[l->len] = '\0';
 					fputs(l->c, stdout);
 					b_default();
 				} else if( l->dirty ){
 					fputs(l->c, stdout);
 				} else {
-					c_nline();
+					/*c_nline();*/
 				}
 			}
 			c_goto(i, ccol);
