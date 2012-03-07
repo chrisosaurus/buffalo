@@ -147,6 +147,7 @@ void /* reset terminal, print error, and exit */
 i_die(char *c){
 	i_tidyup();
 	fputs(c, stderr);
+	fflush(stderr);
 	exit(1);
 }
 
@@ -232,10 +233,11 @@ i_tidyup(void){
 	t_clear();
 	f_normal();
 	c_line0();
+	fflush(stdout);
 }
 
 void /* perform actual drawing to screen */
-i_draw(void){
+i_odraw(void){
 	int nh = t_getheight();
 	int i=0, crow=0, ccol=0;
 
@@ -256,7 +258,7 @@ i_draw(void){
 		l->dirty = false;
 	}
 	if( i == nh-1 ){
-			write(1, l->c, l->len); /* FIXME ideally we should get rid of this in favour of buffered */
+			write(1, l->c, l->len-1); /* FIXME ideally we should get rid of this in favour of buffered */
 			l->dirty = false;
 			if( l == cur.l )
 				crow = nh;
@@ -269,7 +271,7 @@ i_draw(void){
 }
 
 void /* perform drawing to screen, force cursor onto screen and handle higlighting and selection */
-i_ndraw(void){
+i_draw(void){
 	/* FIXME this seems way more complex than it needs to be */
 	int nh = t_getheight(), nw = t_getwidth();
 	bool sdirty = false; /* is the entire range sstart->send dirty */
@@ -325,6 +327,7 @@ i_ndraw(void){
 			return;
 		}
 	}
+	i_die("shouldnt have got here");
 	for( l=fstart, i=0; l!=sstart && l->next; ++i, l=l->next ){
 		if( l == cur.l ){
 			if( i > nh ){
