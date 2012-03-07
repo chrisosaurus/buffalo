@@ -26,7 +26,7 @@ int main(){
 
 	// prepare terminal
 	t_clear();
-	f_default();
+	f_normal();
 	c_line0();
 
 	//write(1, "hello\n", 6);
@@ -35,135 +35,71 @@ int main(){
 	int interactive = 0;
 
 	// testing
-	f_default();
+	f_normal();
 
-	write(1, "d", 1);
+    fputs("d", stdout);
 	f_red();
-	write(1, "r", 1);
+    fputs("r", stdout);
 	f_green();
-	write(1, "g", 1);
+    fputs("g", stdout);
 	f_yellow();
-	write(1, "y", 1);
+    fputs("y", stdout);
 	f_blue();
-	write(1, "b", 1);
+    fputs("b", stdout);
 	f_magenta();
-	write(1, "m", 1);
+    fputs("m", stdout);
 	f_cyan();
-	write(1, "c", 1);
+    fputs("c", stdout);
 
-	f_default();
+	f_normal();
 	f_bold();
 
-	write(1, "b", 1);
+    fputs("b", stdout);
 	f_red();
-	write(1, "r", 1);
+    fputs("r", stdout);
 	f_green();
-	write(1, "g", 1);
+    fputs("g", stdout);
 	f_yellow();
-	write(1, "y", 1);
+    fputs("y", stdout);
 	f_blue();
-	write(1, "b", 1);
+    fputs("b", stdout);
 	f_magenta();
-	write(1, "m", 1);
+    fputs("m", stdout);
 	f_cyan();
-	write(1, "c", 1);
+    fputs("c", stdout);
 
-	f_default();
+	f_normal();
+    fputs("\n", stdout);
+    fflush(stdout);
 
 
-	// main loop
-	while( alive ){
-		while( interactive ){
-			read(0, &chs, 2);
-			/*write(1, "got:", 4);
-				write(1, chs, 1);
-				printf("%d\n", chs[0]); */
-			if( chs[0] == 'a' )
-				write(1, "YES", 3);
-			else if( chs[0] == 127 ) // backspace
-				write(1, "@", 1);
-			else if( chs[0] == 10 ) // enter
-				c_nline();
-			else if( chs[0] == 27 ){ // esc, NB alt + a will mean that chs[0] is ESC and chs[1] is a
-				if( ! chs[1])
-					interactive = 0; // if only esc is pressed, then this means swap modes
-				printf("%d\n", chs[1]); // otherwise something more complex may be going on
-				chs[1] = 0;
-			}
-			else if( chs[0] == 1 ){ // Ctrl + a
-				write(1, ":)", 2);
-				interactive = 0;
-			}
-			else{
-				if( chs[0] < 30 || chs[0] > 126 ) // dont print out of range characters
-					printf("%d ", chs[0]);
-				else{
-					write(1, chs, 1);
-				}
-			}
-
-		}
-
-		if( read(0, &chs, 1) ){
-			//printf("read something: %s\n", chs);
-			switch(chs[0]){
-				case 'w':
-					c_up();
-					break;
-				case 'a':
-					c_left();
-					break;
-				case 's':
-					c_down();
-					break;
-				case 'd':
-					c_right();
-					break;
-				case 'q':
-					c_nline();
-					break;
-				case 'e':
-					c_pline();
-					break;
-
-				case '-':
-					c_save();
-					break;
-				case '=':
-					c_restore();
-					break;
-
-				case '!':
-					alive = 0;
-					break;
-				case '`':
-					interactive = 1;
-					break;
-				case '0':
-					c_line0();
-					break;
-
-				case '1':
-					f_red();
-					break;
-				case '2':
-					f_blue();
-					break;
-				case '3':
-					f_green();
-					break;
-
-			}
-		}else
-			printf("read returning empty handed\n");
-	}
+    b_default();
+    fputs("default\n", stdout);
+    b_black();
+    fputs("black\n", stdout);
+    b_red();
+    fputs("red\n", stdout);
+    b_green();
+    fputs("green\n", stdout);
+    b_yellow();
+    fputs("yellow\n", stdout);
+    b_blue();
+    fputs("blue\n", stdout);
+    b_magenta();
+    fputs("magenta\n", stdout);
+    b_cyan();
+    fputs("cyan\n", stdout);
+    b_white();
+    fputs("white\n", stdout);
+    b_default();
+    fflush(stdout);
 
 	if( tcsetattr(1, TCSANOW, &bkp) ){
 		perror("failed to reset termios setting back to the backup\n");
 		exit(1);
 	}
 	// tidy up a little
-	t_clear();
-	f_default();
-	c_line0();
+	/*t_clear();*/
+	f_normal();
+	/*c_line0();*/
 }
