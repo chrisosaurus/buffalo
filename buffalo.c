@@ -13,7 +13,7 @@
 typedef struct Line Line;
 struct Line {
 	char *c; /* contents, \0 terminated and may include a \n */
-	int len; /* number of utf8 chars (one ut8 char can be many bytes)*/
+	int len; /* number of bytes excluding trailing \0 (not chars as utf8 chars are multibyte) */
 	int mul; /* capacity as multiple of LINESIZE */
 	bool dirty; /* been modified since last draw */
 	Line *next; /* next line or null */
@@ -102,7 +102,7 @@ m_prevchar(Filepos pos){
 	if( --pos.o < 0 ){
 		if( pos.l->prev ){
 			pos.l = pos.l->prev;
-			pos.o = pos.l->len;
+			pos.o = pos.l->len > 0 ? pos.l->len - 1 : 0;
 		} else
 			pos.o = 0;
 	}
@@ -118,7 +118,7 @@ m_nextchar(Filepos pos){
 			pos.l = pos.l->next;
 			pos.o = 0;
 		} else
-			pos.o = pos.l->len;
+			pos.o = pos.l->len > 0 ? pos.l->len - 1 : 0;
 	}
 	return pos;
 }
@@ -128,8 +128,8 @@ m_prevline(Filepos pos){
 	if( ! pos.l || ! pos.l->prev )
 		return pos;
 	pos.l = pos.l->prev;
-	if( pos.o > pos.l->len )
-		pos.o = pos.l->len;
+	if( pos.o >= pos.l->len )
+		pos.o = pos.l->len > 0 ? pos.l->len - 1 : 0;
 	return pos;
 }
 
@@ -138,8 +138,8 @@ m_nextline(Filepos pos){
 	if( ! pos.l || ! pos.l->next )
 		return pos;
 	pos.l = pos.l->next;
-	if( pos.o > pos.l->len )
-		pos.o = pos.l->len;
+	if( pos.o >= pos.l->len )
+		pos.o = pos.l->len > 0 ? pos.l->len - 1 : 0;
 	return pos;
 }
 
@@ -177,6 +177,7 @@ i_insert(Filepos pos, const char *buf){
 				i_insert((Filepos){ln, 0}, &(l->c[pos.o]));
 			/* insert c followed by \0 */
 			l->c[pos.o] = c;
+			l->len = pos.o+1;
 			l->c[pos.o+1] = '\0';
 			/* possibly need to correct fend if we have gone past it */
 			if( l == fend )
@@ -188,14 +189,14 @@ i_insert(Filepos pos, const char *buf){
 			if( l->len+2 >= LINESIZE*l->mul )
 				if( ! (l->c = realloc(l->c, LINESIZE*(++l->mul))) ) i_die("failed to realloc in insert");
 			/* memmove down the bus */
-			if( pos.o <= l->len )
-				if( ! memmove( &(l->c[pos.o+1]), &(l->c[pos.o]), (l->len-pos.o)+1) ) i_die("failed to memmove in insert");
+			if( pos.o < l->len )
+				if( ! memmove( &(l->c[pos.o+1]), &(l->c[pos.o]), (l->len-pos.o)) ) i_die("failed to memmove in insert");
 			/* insert char */
 			l->c[pos.o] = c;
 			/* correct len */
 			++l->len;
 			/* possibly make sure last char is \0, needed as testing if we are appending is more expensive than just doing */
-			l->c[l->len+1] = '\0';
+			l->c[l->len] = '\0';
 			/* mark dirty */
 			l->dirty = true;
 			/* move along */
@@ -411,7 +412,7 @@ i_savefile(char *fname){
 		i_die("failed to open file for writing in savefile");
 
 	for( l=fstart; l; l=l->next )
-		if( write(fd, l->c, l->len+1) == -1 ){
+		if( write(fd, l->c, l->len) == -1 ){
 				error = true;
 				break;
 		}
