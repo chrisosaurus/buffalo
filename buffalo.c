@@ -44,7 +44,7 @@ static Filepos cur = { 0, 0 }; /* current position in file */
 static Filepos sels = {0, 0}, sele = {0, 0}; /* start and end of selection */
 static tstate orig; /* original terminal state */
 static char *curfile; /* current file name */
-static int oldheight = 0; /* height last time we drew */
+static int oldheight=0, oldwidth=0; /* height last time we drew */
 
 /** Internal functions **/
 static Filepos i_insert(Filepos pos, const char *buf); /* insert buf at pos and return new filepos after the inserted char */
@@ -53,7 +53,7 @@ static void i_setup(void); /* setup the terminal for editing */
 static void i_tidyup(void); /* clean up and return the terminal to it's original state */
 static void i_draw(void); /* draw lines from sstart until either the screen if full or we run out of lines */
 static int i_loadfile(char *fname); /* initialise data structure and read in file */
-static int i_savefile(void); /* write the fstart to fend to the file named in curfile */
+static bool i_savefile(char *fname); /* write the fstart to fend to the file named in curfile */
 static void i_die(char *c); /* reset terminal, print c to stderr and exit */
 
 /** Movement functions **/
@@ -72,8 +72,8 @@ static Filepos m_nextscreen(Filepos pos);
 
 /** Functions to bind to a key **/
 static void f_cur(const Arg *arg); /* call arg.func(cur) and set cur to return value */
-static void f_quit(const Arg *arg); /* ignored arg, tidyup and quit */
-
+static void f_quit(const Arg *arg); /* ignore arg, tidyup and quit */
+static void f_write(const Arg *arg); /* ignore arg, save file to curfile */
 
 #include "config.h"
 
@@ -87,6 +87,11 @@ void /* tidyup and quit */
 f_quit(const Arg *arg){
 	i_tidyup();
 	exit(0);
+}
+
+void /* write file to curfile */
+f_write(const Arg *arg){
+	i_savefile(curfile);
 }
 
 /* Movement functions definitions */
@@ -173,6 +178,9 @@ i_insert(Filepos pos, const char *buf){
 			/* insert c followed by \0 */
 			l->c[pos.o] = c;
 			l->c[pos.o+1] = '\0';
+			/* possibly need to correct fend if we have gone past it */
+			if( l == fend )
+				fend = ln;
 			/* actually pos has to be the character after the \n, as in the first char of the new line */
 			l = ln;
 			pos = (Filepos){l, 0};
@@ -180,16 +188,17 @@ i_insert(Filepos pos, const char *buf){
 			if( l->len+2 >= LINESIZE*l->mul )
 				if( ! (l->c = realloc(l->c, LINESIZE*(++l->mul))) ) i_die("failed to realloc in insert");
 			/* memmove down the bus */
-			if( pos.o < l->len )
-				if( ! memmove( &(l->c[pos.o+1]), &(l->c[pos.o]), l->len-pos.o) ) i_die("failed to memmove in insert");
+			if( pos.o <= l->len )
+				if( ! memmove( &(l->c[pos.o+1]), &(l->c[pos.o]), (l->len-pos.o)+1) ) i_die("failed to memmove in insert");
 			/* insert char */
 			l->c[pos.o] = c;
+			/* correct len */
+			++l->len;
 			/* possibly make sure last char is \0, needed as testing if we are appending is more expensive than just doing */
 			l->c[l->len+1] = '\0';
 			/* mark dirty */
 			l->dirty = true;
-			/* correct len */
-			++l->len;
+			/* move along */
 			++pos.o;
 		}
 	}
@@ -261,18 +270,24 @@ i_draw(void){
 void /* perform drawing to screen, force cursor onto screen and handle higlighting and selection */
 i_ndraw(void){
 	/* FIXME this seems way more complex than it needs to be */
-	int nh = t_getheight();
+	int nh = t_getheight(), nw = t_getwidth();
+	bool sdirty = false; /* is the entire range sstart->send dirty */
 	int i=0, crow=0, ccol=0;
 	Line *l;
 	
-	/* FIXME need to handle initial set up for sstart and send, has to be done in here
-	 * currently sstart=fstart, send=fend (see i_draw) but this is wrong
-	 */
+	if( ! fstart )
+		return ; /* FIXME if we havent loaded a file yet */
 
+	if( ! sstart )
+		sstart = send = fstart;
+
+	/* if height has changed, correct the sstart->send range, marking any new additions as dirty */
 	if( nh > oldheight ){
 		for( i=nh=oldheight; i>0; --i )
-			if( send->next )
+			if( send->next ){
 				send = send->next; /* move send down */
+				send->dirty = true;
+			}
 	} else if( nh < oldheight ){
 		for( i=oldheight-nh; i>0; --i )
 			if( send->prev )
@@ -280,26 +295,36 @@ i_ndraw(void){
 	}
 	oldheight = nh;
 	
+	/* if the width has changed, every line needs to be redrawn so we can see the missing characters */
+	if( nw > oldwidth )
+		sdirty = true;
+	oldwidth = nw;
+	
 	/* find cursor column */
 	for(i=0, ccol=0; i < cur.o; i += i_utf8len(&(cur.l->c[i])), ++ccol) ;
 
-	/* FIXME need to deal with case of initial drawing AND redrawing of every dirty line on screen (not just cursor)
-	 * can hopefully combine these two cases (initially every line is dirty ;)
-	 */
-
 	/* handle the three cases of cursor position; on screen, before screen, and after screen resp. */
-	for( l=sstart, i=0; l!=send; ++i ){
+	for( l=sstart, i=0; l!=send && l->next; ++i, l=l->next ){
 		if( l == cur.l ){
-			c_goto(i, 0);
-			b_blue();
-			fputs(stdout, l->c);
-			b_default();
-			c_goto(i, 0);
+			c_line0();
+			for( l=sstart; l!=send; l=l->next ){
+				if( l == cur.l ){
+					c_goto(i, 0);
+					b_blue();
+					fputs(stdout, l->c);
+					b_default();
+				} else if( l->dirty ){
+					fputs(stdout, l->c);
+				} else {
+					c_nline();
+				}
+			}
+			c_goto(i, ccol);
 			fflush(stdout);
 			return;
 		}
 	}
-	for( l=fstart, i=0; l!=sstart; ++i ){
+	for( l=fstart, i=0; l!=sstart && l->next; ++i, l=l->next ){
 		if( l == cur.l ){
 			if( i > nh ){
 				/* if i is greater than screen heights, scrolling wont save us anything, so have to redraw
@@ -314,7 +339,7 @@ i_ndraw(void){
 			return;
 		}
 	}
-	for( l=send, i=0; l!=fend; ++i ){
+	for( l=send, i=0; l!=fend && l->next; ++i, l=l->next ){
 		if( l == cur.l ){
 			if( i > nh ){
 				/* if i is greater than screen heights, scrolling wont save us anything, so have to redraw
@@ -373,9 +398,25 @@ i_loadfile(char *fname){
 	return 0;
 }
 
-int /* write fstart to fend to file named in curfile */
-i_savefile(void){
-	/* write to <curfile>.tmp and then move to <curfile> */	
+bool /* write fstart to fend to file named in curfile */
+i_savefile(char *fname){
+	int fd;
+	Line *l;
+	bool error = false;
+
+	if( ! fstart )
+		return false;
+
+	if( (fd=open(fname, O_WRONLY)) == -1 )
+		i_die("failed to open file for writing in savefile");
+
+	for( l=fstart; l; l=l->next )
+		if( write(fd, l->c, l->len+1) == -1 ){
+				error = true;
+				break;
+		}
+	
+	return error;
 }
 
 int /* the magic main function */
@@ -394,6 +435,8 @@ main(int argc, char **argv){
 		t_read(ch, 7);
 		if( i_utf8len(ch) > 1 ){
             cur = i_insert(cur, ch);
+		} else if( ch[0] == 127 ){
+			/* FIXME backspace */
 		} else if( ch[0] == 0x1B ){ /* FIXME change to constant to support CONTROL */
 			for( i=0; i<LENGTH(keys); ++i )
 				if( memcmp( ch, keys[i].c, sizeof(keys[i].c)) == 0 ){

@@ -51,18 +51,6 @@ int main(){
 	}
 	fflush(stdout);
 
-	c_line0();
-	b_blue();
-	fputs("hehe", stdout);
-	fflush(stdout);
-	f_normal();
-	c_goto(20, 20);
-	if( tcsetattr(1, TCSANOW, &bkp) ){
-		perror("failed to reset termios setting back to the backup\n");
-		exit(1);
-	}
-	return 0;
-
 	// main loop
 	while( alive ){
 		chs[0]=chs[1]=chs[2]=chs[3]=chs[4]=chs[5]=chs[6]=0;
