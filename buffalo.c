@@ -51,7 +51,8 @@ static Filepos i_insert(Filepos pos, const char *buf); /* insert buf at pos and 
 static int i_utf8len(const char *c); /* return number of bytes of utf char c */
 static void i_setup(void); /* setup the terminal for editing */
 static void i_tidyup(void); /* clean up and return the terminal to it's original state */
-static void i_draw(void); /* draw lines from sstart until either the screen if full or we run out of lines */
+static void i_draw(void); /* force cursor to be on screen, make sure screen is correct size, then delegate to i_drawscr for actual drawing */
+static void i_drawscr(bool sdirty, int crow, int ccol); /* draw all dirty lines on screen or draw all lines if sdirty */
 static int i_loadfile(char *fname); /* initialise data structure and read in file */
 static bool i_savefile(char *fname); /* write the fstart to fend to the file named in curfile */
 static void i_die(char *c); /* reset terminal, print c to stderr and exit */
@@ -180,6 +181,7 @@ i_insert(Filepos pos, const char *buf){
 			l->c[pos.o] = c;
 			l->len = pos.o+1;
 			l->c[pos.o+1] = '\0';
+			l->dirty = true;
 			/* possibly need to correct fend if we have gone past it */
 			if( l == fend )
 				fend = ln;
@@ -258,107 +260,122 @@ i_odraw(void){
 		l->dirty = false;
 	}
 	if( i == nh-1 ){
-			write(1, l->c, l->len-1); /* FIXME ideally we should get rid of this in favour of buffered */
-			l->dirty = false;
-			if( l == cur.l )
-				crow = nh;
+		write(1, l->c, l->len-1); /* FIXME ideally we should get rid of this in favour of buffered */
+		l->dirty = false;
+		if( l == cur.l )
+			crow = nh;
 	}
 
 	/* find cursor column */
 	for(i=0, ccol=0; i < cur.o; i += i_utf8len(&(cur.l->c[i])), ++ccol) ;
 	c_goto(crow+1, ccol+1); /* FIXME should I move this elsewhere */
-  fflush(stdout); /* FIXME need to add a note to codes about how fflush-ing is needed */
+	fflush(stdout); /* FIXME need to add a note to codes about how fflush-ing is needed */
 }
 
-void /* perform drawing to screen, force cursor onto screen and handle higlighting and selection */
+void /* draw all dirty lines on screen or draw all lines if sdirty */
+i_drawscr(bool sdirty, int crow, int ccol){
+	Line *l;
+
+	c_line0();
+	for( l=sstart; l&&l!=send; l=l->next ){
+		if( l == cur.l ){
+			b_blue();
+			fputs(l->c, stdout);
+			b_default();
+		} else if( l->dirty || sdirty ){
+			fputs(l->c, stdout);
+		} else {
+			c_nline();
+		}
+	}
+	c_goto(crow, ccol);
+	fflush(stdout);
+	return;
+}
+
+void /* make sure cursor is on screen and screen is correct size, delegate to i_drawscr for actual drawing */
 i_draw(void){
-	/* FIXME this seems way more complex than it needs to be */
 	int nh = t_getheight(), nw = t_getwidth();
 	bool sdirty = false; /* is the entire range sstart->send dirty */
-	int i=0, crow=0, ccol=0;
+	int i=0, ccol=0; /* i is used as a general counter and as crow */
 	Line *l;
-	
+
 	if( ! fstart )
 		return ; /* FIXME if we havent loaded a file yet */
 
 	if( ! sstart )
 		sstart = send = fstart;
 
+	/* FIXME \n insertion screwing up is caused here, ++oldheight in i_insert fixes this but causes a special case
+	 * and i_loadfile must then set oldheight to 0, very hackish. Could fix by everytime height changes start counting
+	 * from scratch (simple, safe as an error means a resize will fix it
+	 */
 	/* if height has changed, correct the sstart->send range, marking any new additions as dirty */
 	if( nh > oldheight ){
 		for( i=nh-oldheight; i>1; --i )
 			if( send->next ){
 				send = send->next; /* move send down */
 				send->dirty = true;
-			}
+			} else
+				break;
 	} else if( nh < oldheight ){
 		for( i=oldheight-nh; i>1; --i )
 			if( send->prev )
 				send = send->prev; /* move send up */
+			else
+				break;
 	}
 	oldheight = nh;
-	
+
 	/* if the width has changed, every line needs to be redrawn so we can see the missing characters */
 	if( nw > oldwidth )
 		sdirty = true;
 	oldwidth = nw;
-	
+
 	/* find cursor column */
 	for(i=0, ccol=1; i < cur.o; i += i_utf8len(&(cur.l->c[i])), ++ccol) ;
 
 	/* handle the three cases of cursor position; on screen, before screen, and after screen resp. */
-	for( l=sstart, i=1; l!=send && l; ++i, l=l->next ){
+	for( l=sstart, i=1; l!=send && l; ++i, l=l->next )
 		if( l == cur.l ){
-			c_line0();
-			for( l=sstart; l&&l!=send; l=l->next ){
-				if( l == cur.l ){
-					/*c_goto(i, 0);*/
-					b_blue();
-					fputs(l->c, stdout);
-					b_default();
-				} else if( l->dirty ){
-					fputs(l->c, stdout);
-				} else {
-					/*c_nline();*/
-				}
-			}
-			c_goto(i, ccol);
-			fflush(stdout);
+			i_drawscr(sdirty, i, ccol);
 			return;
 		}
-	}
-	i_die("shouldnt have got here");
-	for( l=fstart, i=0; l!=sstart && l->next; ++i, l=l->next ){
+	for( l=fstart, i=1; l!=sstart && l->next; ++i, l=l->next ){
 		if( l == cur.l ){
 			if( i > nh ){
 				/* if i is greater than screen heights, scrolling wont save us anything, so have to redraw
 				 * print lines such that h/2 is cur.l */
+				/* FIXME adjust sstart and send, set dirty lines */
 			} else {
-				 /*    scroll down by i
+				/*    scroll down by i
 				 *     goto sstart
 				 *     draw i line - draw first highlighted
 				 */
+				/* FIXME adjust sstart and send, set dirty lines */
 			}
-			fflush(stdout);
+			i_drawscr(sdirty, i, ccol);
 			return;
 		}
 	}
-	for( l=send, i=0; l!=fend && l->next; ++i, l=l->next ){
+	for( l=send, i=1; l!=fend && l->next; ++i, l=l->next ){
 		if( l == cur.l ){
 			if( i > nh ){
 				/* if i is greater than screen heights, scrolling wont save us anything, so have to redraw
 				 * print lines such that h/2 is cur.l */
+				/* FIXME adjust sstart and send, set dirty lines */
 			} else {
-			 /*	   scroll up by i
-			 *	   goto start
-			 *	   draw i lines - draw last highlighted
-			 */
+				/*	   scroll up by i
+				 *	   goto start
+				 *	   draw i lines - draw last highlighted
+				 */
+				/* FIXME adjust sstart and send, set dirty lines */
 			}
-			fflush(stdout);
+			i_drawscr(sdirty, i, ccol);
 			return;
 		}
 	}
-	i_die("got to impossible case in i_draw");
+	i_die("impossible case occured in i_draw, *BOOM*\n");
 }
 
 int /* initialise data structure and read in file */
@@ -416,10 +433,10 @@ i_savefile(char *fname){
 
 	for( l=fstart; l; l=l->next )
 		if( write(fd, l->c, l->len) == -1 ){
-				error = true;
-				break;
+			error = true;
+			break;
 		}
-	
+
 	return error;
 }
 
@@ -438,7 +455,7 @@ main(int argc, char **argv){
 		i_draw();
 		t_read(ch, 7);
 		if( i_utf8len(ch) > 1 ){
-            cur = i_insert(cur, ch);
+			cur = i_insert(cur, ch);
 		} else if( ch[0] == 127 ){
 			/* FIXME backspace */
 		} else if( ch[0] == 0x1B ){ /* FIXME change to constant to support CONTROL */
@@ -448,7 +465,7 @@ main(int argc, char **argv){
 					break;
 				}
 		} else { /* ascii character */
-            cur = i_insert(cur, ch);
+			cur = i_insert(cur, ch);
 		}
 
 	}
