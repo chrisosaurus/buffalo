@@ -144,6 +144,74 @@ m_nextline(Filepos pos){
 	return pos;
 }
 
+Filepos /* move cursor to start of line */
+m_startofline(Filepos pos){
+	if( ! pos.l )
+		return pos;
+	pos.o = 0;
+	return pos;
+}
+
+Filepos /* move cursor to end of line */
+m_endofline(Filepos pos){
+	if( ! pos.l )
+		return pos;
+	pos.o = pos.l->len > 0 ? pos.l->len -1 : 0;
+	return pos;
+}
+
+Filepos /* move cursor to start of file */
+m_startoffile(Filepos pos){
+	if( ! pos.l || ! fstart )
+		return pos;
+	pos.l = fstart;
+	pos.o = 0;
+	return pos;
+}
+
+Filepos /* move cursor to end of file */
+m_endoffile(Filepos pos){
+	if( ! pos.l || ! fend )
+		return pos;
+	pos.l = fend;
+	pos.o = pos.l->len > 0 ? pos.l->len -1 : 0; /* FIXME end of start of last line? */
+	return pos;
+}
+
+Filepos /* move cursor to next space */
+m_prevword(Filepos pos){
+	if( ! pos.l )
+		return pos;
+	for( pos = m_prevchar(pos); pos.l->c[pos.o] != ' '; pos = m_prevchar(pos));
+	return pos;
+}
+
+Filepos /* move cursor to next space */
+m_nextword(Filepos pos){
+	if( ! pos.l )
+		return pos;
+	for( pos = m_nextchar(pos); pos.l->c[pos.o] != ' '; pos = m_nextchar(pos));
+	return pos;
+}
+
+Filepos /* move cursor to next screen */
+m_nextscreen(Filepos pos){
+	if( ! pos.l || ! send )
+		return pos;
+	pos.o = 0;
+	pos.l = send->next ? send->next : send ;
+	return pos;
+}
+
+Filepos /* move cursor to prev screen */
+m_prevscreen(Filepos pos){
+	if( ! pos.l || ! sstart )
+		return pos;
+	pos.o = 0;
+	pos.l = sstart->prev ? sstart->prev : sstart;
+	return pos;
+}
+
 void /* reset terminal, print error, and exit */
 i_die(char *c){
 	i_tidyup();
@@ -335,6 +403,7 @@ i_draw(void){
 	/* find cursor column */
 	for(i=0, ccol=1; i < cur.o; i += i_utf8len(&(cur.l->c[i])), ++ccol) ;
 
+	/* FIXME all these loops end one too soon, l!=blah will NOT include blah within its range */
 	/* handle the three cases of cursor position; on screen, before screen, and after screen resp. */
 	for( l=sstart, i=1; l!=send && l; ++i, l=l->next )
 		if( l == cur.l ){
