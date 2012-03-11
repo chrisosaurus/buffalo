@@ -350,8 +350,10 @@ i_drawscr(bool sdirty, int crow, int ccol){
 			b_blue();
 			fputs(l->c, stdout);
 			b_default();
+			l->dirty = true;
 		} else if( l->dirty || sdirty ){
 			fputs(l->c, stdout);
+			l->dirty = false;
 		} else {
 			c_nline();
 		}
