@@ -378,7 +378,7 @@ i_draw(void){
 
 	/* FIXME \n insertion screwing up is caused here, ++oldheight in i_insert fixes this but causes a special case
 	 * and i_loadfile must then set oldheight to 0, very hackish. Could fix by everytime height changes start counting
-	 * from scratch (simple, safe as an error means a resize will fix it
+	 * from scratch (simple, safe as an error means a resize will fix it but looses some efficiency)
 	 */
 	/* if height has changed, correct the sstart->send range, marking any new additions as dirty */
 	if( nh > oldheight ){
@@ -455,7 +455,7 @@ i_loadfile(char *fname){
 	char *buf=0;
 	ssize_t n;
 
-	if( ! cur.o ){
+	if( ! fstart ){
 		/* initialise data structure */
 		if( ! (fstart = (Line*) malloc(sizeof(Line))) ) i_die("failed to malloc in loadfile");
 		if( ! (fstart->c = (char*) calloc(LINESIZE, sizeof(char))) ) i_die("failed to malloc in loadfile");
