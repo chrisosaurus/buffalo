@@ -1,6 +1,7 @@
 static int tabstop = 2;
 
 #define ALT(ch) { 0x1b, ch }
+#define CTRL(ch) { (ch^0x40) }
 
 static const Key keys[] = {
 	/* c        m_func    Arg */
@@ -18,7 +19,9 @@ static const Key keys[] = {
 	{ ALT('u'), f_cur, { .m_func = m_startofline } },
 	{ ALT('U'), f_cur, { .m_func = m_startoffile } },
 	{ ALT('o'), f_cur, { .m_func = m_endofline } },
-	{ ALT('O'), f_cur, { .m_func = m_endoffile } }
+	{ ALT('O'), f_cur, { .m_func = m_endoffile } },
+
+	{ CTRL('Z'), f_suspend, { .c=0 } },
 
 	/*{ ALT('h'), f_cur, { .m_func = m_SOMETHING } },
 	{ ALT('H'), f_cur, { .m_func = m_SOMETHING } },

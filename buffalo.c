@@ -4,9 +4,13 @@
 #include <unistd.h> /* write */
 #include <stdio.h> /* puts, BUFSIZ */
 #include <fcntl.h> /* open, close */
+#include <signal.h> /* signal, raise, SIGSTOP, SIGCONT */
 #include "codes.h" /* because ncurses sucks more */
 
 #define LINESIZE 80
+
+#define ISCTRL(ch) ((unsigned char)ch < 0x20)
+#define ISALT(ch) ((unsigned char)ch == 0x1b)
 
 #define LENGTH(blah) ((int)(sizeof(blah)/sizeof*(blah)))
 
@@ -56,6 +60,8 @@ static void i_drawscr(bool sdirty, int crow, int ccol); /* draw all dirty lines 
 static int i_loadfile(char *fname); /* initialise data structure and read in file */
 static bool i_savefile(char *fname); /* write the fstart to fend to the file named in curfile */
 static void i_die(char *c); /* reset terminal, print c to stderr and exit */
+static Filepos i_backspace(Filepos pos); /* trivial backspace, delete prev char */
+static void i_sigcont(int unused); /* what to do on a SIGCONT, used by f_suspend */
 
 /** Movement functions **/
 static Filepos m_startofline(Filepos pos);
@@ -75,6 +81,7 @@ static Filepos m_nextscreen(Filepos pos);
 static void f_cur(const Arg *arg); /* call arg.func(cur) and set cur to return value */
 static void f_quit(const Arg *arg); /* ignore arg, tidyup and quit */
 static void f_write(const Arg *arg); /* ignore arg, save file to curfile */
+static void f_suspend(const Arg *arg); /* suspend to terminal */
 
 #include "config.h"
 
@@ -93,6 +100,13 @@ f_quit(const Arg *arg){
 void /* write file to curfile */
 f_write(const Arg *arg){
 	i_savefile(curfile);
+}
+
+void /* suspend to terminal */
+f_suspend(const Arg *arg){
+	t_clear();
+	signal(SIGCONT, i_sigcont);
+	raise(SIGSTOP);
 }
 
 /* Movement functions definitions */
@@ -212,6 +226,12 @@ m_prevscreen(Filepos pos){
 	return pos;
 }
 
+void /* what to do on a SIGCONT */
+i_sigcont(int unused){
+	sstart = send;
+	oldheight = 0;
+}
+
 void /* reset terminal, print error, and exit */
 i_die(char *c){
 	i_tidyup();
@@ -275,6 +295,22 @@ i_insert(Filepos pos, const char *buf){
 		}
 	}
 	return pos; /* FIXME should point at last char inserted*/
+}
+
+Filepos /*trivial backspace */
+i_backspace(Filepos pos){
+	if( ! pos.l )
+		return pos;
+	/* TODO memmove(pos.o-1, pos.o, (pos.l->len - pos.o) UNLESS pos.o is 0, then we are fucked */
+	if( pos.o == 0 ){
+		return pos; /* FIXME special case */
+	} else {
+		if( ! memmove( &(pos.l->c[pos.o-1]), &(pos.l->c[pos.o]), (pos.l->len - pos.o)+1 ) )
+		 i_die("failed to memmove in i_backspace\n");	/* FIXME off by one in length? */
+		--pos.o;
+		--pos.l->len;
+		return pos;
+	}
 }
 
 int /* return number of bytes of utf char c */
@@ -528,8 +564,10 @@ main(int argc, char **argv){
 		if( i_utf8len(ch) > 1 ){
 			cur = i_insert(cur, ch);
 		} else if( ch[0] == 127 ){
-			/* FIXME backspace */
-		} else if( ch[0] == 0x1B ){ /* FIXME change to constant to support CONTROL */
+			cur = i_backspace(cur);
+		} else if( ch[0] == 10 ){
+			cur = i_insert(cur, ch); /* FIXME \n special case */
+		} else if( ISALT(ch[0]) || ISCTRL(ch[0]) ){
 			for( i=0; i<LENGTH(keys); ++i )
 				if( memcmp( ch, keys[i].c, sizeof(keys[i].c)) == 0 ){
 					keys[i].f_func( &(keys[i].arg) );
@@ -542,3 +580,4 @@ main(int argc, char **argv){
 	}
 	i_tidyup();
 }
+
