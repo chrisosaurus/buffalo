@@ -6,6 +6,7 @@ buffalo TODO:
 write off screen movement
 implement backspace and delete
 fix sstart->send range when a newline is inserted (could just ++oldheight?)
+fix tab alignment issue
 goto line
 
 set / goto / goto&set mark

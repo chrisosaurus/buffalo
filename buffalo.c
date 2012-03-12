@@ -567,6 +567,8 @@ main(int argc, char **argv){
 			cur = i_backspace(cur);
 		} else if( ch[0] == 10 ){
 			cur = i_insert(cur, ch); /* FIXME \n special case */
+		} else if( ch[0] == 9 ){
+			cur = i_insert(cur, "  "); /* FIXME \t special case */
 		} else if( ISALT(ch[0]) || ISCTRL(ch[0]) ){
 			for( i=0; i<LENGTH(keys); ++i )
 				if( memcmp( ch, keys[i].c, sizeof(keys[i].c)) == 0 ){

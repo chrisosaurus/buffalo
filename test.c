@@ -49,6 +49,7 @@ int main(){
 		if( i%2 ) b_blue();
 		else b_green();
 	}
+	b_default();
 	fflush(stdout);
 
 	// main loop
