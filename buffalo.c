@@ -5,6 +5,7 @@
 #include <stdio.h> /* puts, BUFSIZ */
 #include <fcntl.h> /* open, close */
 #include <signal.h> /* signal, raise, SIGSTOP, SIGCONT */
+#include <sys/stat.h> /* S_* */
 #include "codes.h" /* because ncurses sucks more */
 
 #define LINESIZE 80
@@ -381,7 +382,7 @@ i_drawscr(bool sdirty, int crow, int ccol){
 	Line *l;
 
 	c_line0();
-	for( l=sstart; l&&l!=send; l=l->next ){
+	for( l=sstart; l && l != send; l=l->next ){
 		if( l == cur.l ){
 			b_blue();
 			fputs(l->c, stdout);
@@ -443,7 +444,7 @@ i_draw(void){
 
 	/* FIXME all these loops end one too soon, l!=blah will NOT include blah within its range */
 	/* handle the three cases of cursor position; on screen, before screen, and after screen resp. */
-	for( l=sstart, i=1; l!=send && l; ++i, l=l->next )
+	for( l=sstart, i=1; l && i <= nh; ++i, l=l->next )
 		if( l == cur.l ){
 			i_drawscr(sdirty, i, ccol);
 			return;
@@ -482,7 +483,7 @@ i_draw(void){
 			return;
 		}
 	}
-	i_die("impossible case occured in i_draw, *BOOM*\n");
+	//i_die("impossible case occured in i_draw, *BOOM*\n");
 }
 
 int /* initialise data structure and read in file */
@@ -507,7 +508,7 @@ i_loadfile(char *fname){
 		fd = 0;
 	else{
 		if( (fd=open(fname, O_RDONLY)) == -1 )
-			i_die("failed to open file in loadfile");
+			; /* FIXME new file, inform user */
 		curfile = strcpy(malloc(strlen(fname) + 1), fname);
 	}
 
@@ -535,7 +536,7 @@ i_savefile(char *fname){
 	if( ! fstart )
 		return false;
 
-	if( (fd=open(fname, O_WRONLY)) == -1 )
+	if( (fd=open(fname, O_WRONLY|O_TRUNC|O_CREAT, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)) == -1 )
 		i_die("failed to open file for writing in savefile");
 
 	for( l=fstart; l; l=l->next )

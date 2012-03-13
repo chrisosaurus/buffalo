@@ -7,8 +7,9 @@ write off screen movement
 implement backspace and delete
 fix sstart->send range when a newline is inserted (could just ++oldheight?)
 fix tab alignment issue
-goto line
+if we insert a new line, every line after must be redrawn ...
 
+goto line
 set / goto / goto&set mark
 \n bf/af cur line
 sof/eof sol/eol movement
