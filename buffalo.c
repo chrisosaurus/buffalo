@@ -382,16 +382,18 @@ i_odraw(void){
 void /* draw all dirty lines on screen or draw all lines if sdirty */
 i_drawscr(bool sdirty, int crow, int ccol){
 	Line *l;
-	int i=0;
+	int n=1; /* n is line number, c is char counter */
 
 	c_line0();
-	for( i=1, l=sstart; l && i<height; l=l->next, ++i ){
+	for( n=1, l=sstart; l && n<height; l=l->next, ++n ){
 		if( l == cur.l ){
+			c_clearline();
 			b_blue();
 			fputs(l->c, stdout);
 			b_default();
 			l->dirty = true;
 		} else if( l->dirty || sdirty ){
+			c_clearline();
 			fputs(l->c, stdout);
 			l->dirty = false;
 			sdirty = true; /* FIXME inserting a \n causes every line afterwards to be redrawn */

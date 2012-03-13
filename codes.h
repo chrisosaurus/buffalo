@@ -63,5 +63,5 @@ int c_moved(); /* move cursor down a line, will add a line if at end of screen *
 int c_scrlu(int n);
 int c_scrld(int n);
 int c_goto(int line, int pos);
-
+int c_clearline(); /* clear current line */
 #endif

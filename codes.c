@@ -89,3 +89,4 @@ int c_moved(){ return fputs("D", stdout); }
 int c_scrlu(int n){ char c[6]; snprintf(c, 6, "%c[%dS", 0x1b, n); return fputs(c, stdout); }
 int c_scrld(int n){ char c[6]; snprintf(c, 6, "%c[%dT", 0x1b, n); return fputs(c, stdout); }
 int c_goto(int line, int off){ char c[10]; snprintf(c, 10, "%c[%d;%dH", 0x1b, line, off); return fputs(c, stdout); }
+int c_clearline(){ return fputs("[2K", stdout); }
