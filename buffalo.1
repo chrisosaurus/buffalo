@@ -1,8 +1,75 @@
 .TH BUFFALO 1 buffalo\-VERSION
+
 .SH NAME
 buffalo \- buffalo buffalo buffalo buffalo buffalo buffalo buffalo
+
 .SH SYNOPSIS
 .B buffalo
+.RI file
+
 .SH DESCRIPTION
-buffalo is a simple modeless editor that uses it's own replacement for ncurses
-(currently called codes). It is still in production so cant do much at all...
+buffalo is a simple modeless editor that DOESNT rely on ncurses.
+
+.SH USAGE
+The default key\-bindings try to concentrate on the qwerty home row.
+
+.SS Cursor Operations
+.BR Alt\-i
+Move cursor up one line (same offset within line or last character).
+.TP
+.BR Alt\-k
+Move cursor down one line (same offset within line or last character).
+.TP
+.BR Alt\-j
+Move cursor left one char (will 'underflow' to previous line).
+.TP
+.BR Alt\-l
+Move cursor right one char (will 'overflow' to next line).
+.TP
+.BR Alt\-I
+Move up one 'screen'.
+.TP
+.BR Alt\-K
+Move down one 'screen'.
+.TP
+.BR Alt\-J
+Move cursor left one word (uses whitespace to determine words).
+.TP
+.BR Alt\-L
+Move cursor right one word (uses whtiespace to determine words).
+.TP
+
+.BR Alt\-i
+Move cursor to start of line.
+.TP
+.BR Alt\-o
+Move cursor to end of line.
+.TP
+.BR Alt\-U
+Move cursor to start of file.
+.TP
+.BR Alt\-O
+Move cursor to end of file.
+
+
+.SS Mark Operations
+.BR Alt\-g
+Set mark to current position.
+.TP
+.BR Alt\-G
+Set cursor to current mark.
+.TP
+.BR Alt\-t
+Set mark to current position, then jump to old mark ('toggle').
+
+
+.SS File Operations
+.BR Alt\-q
+Quit, will fail for unsaved changes.
+.TP
+.BR Alt\-Q
+Quit regardless of unsaved changes.
+.TP
+.BR Alt\-w
+Write file to disk.
+.TP
