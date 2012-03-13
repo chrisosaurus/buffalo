@@ -322,9 +322,24 @@ Filepos /*trivial backspace */
 i_backspace(Filepos pos){
 	if( ! pos.l )
 		return pos;
-	/* TODO memmove(pos.o-1, pos.o, (pos.l->len - pos.o) UNLESS pos.o is 0, then we are fucked */
 	if( pos.o == 0 ){
-		return pos; /* FIXME special case */
+		if( ! pos.l->prev ) return pos;
+		Line *l = pos.l->prev;
+		int nl = pos.l->len + l->len -1;
+		l->mul = nl / LINESIZE +1;
+
+		if( ! (realloc(l->c, l->mul*LINESIZE)) ) i_die("failed to realloc in i_backspace\n");
+		if( ! (memcpy( &(l->c[l->len-1]), pos.l->c, pos.l->len )) ) i_die("failed to memcpy in i_backspace\n");
+
+		pos.o = l->len;
+		l->len = nl;
+		l->next = pos.l->next;
+		if( l->next )
+			l->next->prev = l;
+		free(pos.l->c);
+		free(pos.l);
+		pos.l = l;
+		return pos;
 	} else {
 		if( ! memmove( &(pos.l->c[pos.o-1]), &(pos.l->c[pos.o]), (pos.l->len - pos.o)+1 ) )
 		 i_die("failed to memmove in i_backspace\n");	/* FIXME off by one in length? */
@@ -416,6 +431,10 @@ i_drawscr(bool sdirty, int crow, int ccol){
 		} else {
 			c_nline();
 		}
+	}
+	for( ; n<height; ++n ){
+		c_nline();
+		c_clearline();
 	}
 	c_goto(crow, ccol);
 	fflush(stdout);
