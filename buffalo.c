@@ -468,7 +468,7 @@ i_draw(void){
 
 	/* FIXME all these loops end one too soon, l!=blah will NOT include blah within its range */
 	/* handle the three cases of cursor position; on screen, before screen, and after screen resp. */
-	for( l=sstart, i=1; l && i <= nh; ++i, l=l->next )
+	for( l=sstart, i=1; l && i < nh; ++i, l=l->next )
 		if( l == cur.l ){
 			i_drawscr(sdirty, i, ccol);
 			return;
@@ -487,6 +487,7 @@ i_draw(void){
 				 */
 				/* FIXME adjust sstart and send, set dirty lines */
 			}
+			sstart = l; /* FIXME temporary hack */
 			i_drawscr(sdirty, i, ccol);
 			return;
 		}
@@ -504,11 +505,12 @@ i_draw(void){
 				 */
 				/* FIXME adjust sstart and send, set dirty lines */
 			}
+			sstart = l; /* FIXME temporary hack */
 			i_drawscr(sdirty, i, ccol);
 			return;
 		}
 	}
-	//i_die("impossible case occured in i_draw, *BOOM*\n");
+	i_die("impossible case occured in i_draw, *BOOM*\n");
 }
 
 int /* initialise data structure and read in file */
