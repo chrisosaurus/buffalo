@@ -8,11 +8,11 @@ implement backspace and delete
 fix sstart->send range when a newline is inserted (could just ++oldheight?)
 fix tab alignment issue
 if we insert a new line, every line after must be redrawn ...
+WE MUST ALWAYS PRINT A FULL WIDTH, fill with spaces to over write (only needs to be redone on dirty lines)
 
 goto line
 set / goto / goto&set mark
 \n bf/af cur line
-sof/eof sol/eol movement
 selection / paste / cut / delete
 search
 screen movement

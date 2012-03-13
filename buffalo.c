@@ -44,12 +44,12 @@ typedef struct { /* key binding */
 
 /* Naughty global variables */
 static Line *fstart=0, *fend=0; /* first and last lines */
-static Line *sstart=0, *send=0; /* first and last lines on screen */
+static Line *sstart=0; /* first line on screen */
 static Filepos cur = { 0, 0 }; /* current position in file */
 static Filepos sels = {0, 0}, sele = {0, 0}; /* start and end of selection */
 static tstate orig; /* original terminal state */
 static char *curfile; /* current file name */
-static int oldheight=0, oldwidth=0; /* height last time we drew */
+static int height=0, width=0; /* height last time we drew */
 
 /** Internal functions **/
 static Filepos i_insert(Filepos pos, const char *buf); /* insert buf at pos and return new filepos after the inserted char */
@@ -211,26 +211,30 @@ m_nextword(Filepos pos){
 
 Filepos /* move cursor to next screen */
 m_nextscreen(Filepos pos){
+	/* FIXME
 	if( ! pos.l || ! send )
 		return pos;
 	pos.o = 0;
 	pos.l = send->next ? send->next : send ;
+	*/
 	return pos;
 }
 
 Filepos /* move cursor to prev screen */
 m_prevscreen(Filepos pos){
+	/* FIXME
 	if( ! pos.l || ! sstart )
 		return pos;
 	pos.o = 0;
 	pos.l = sstart->prev ? sstart->prev : sstart;
+	*/
 	return pos;
 }
 
 void /* what to do on a SIGCONT */
 i_sigcont(int unused){
-	sstart = send;
-	oldheight = 0;
+	height=0;
+	i_draw();
 }
 
 void /* reset terminal, print error, and exit */
@@ -351,10 +355,8 @@ i_odraw(void){
 	t_clear();
 	c_line0();
 
-	if( ! sstart ){
+	if( ! sstart )
 		sstart = fstart;
-		send = fend;
-	}
 
 	/* FIXME force cursor to be on screen, TODO work out if we can calculate crow and ccol here */
 	Line *l = sstart;
@@ -380,9 +382,10 @@ i_odraw(void){
 void /* draw all dirty lines on screen or draw all lines if sdirty */
 i_drawscr(bool sdirty, int crow, int ccol){
 	Line *l;
+	int i=0;
 
 	c_line0();
-	for( l=sstart; l && l != send; l=l->next ){
+	for( i=1, l=sstart; l && i<height; l=l->next, ++i ){
 		if( l == cur.l ){
 			b_blue();
 			fputs(l->c, stdout);
@@ -391,6 +394,7 @@ i_drawscr(bool sdirty, int crow, int ccol){
 		} else if( l->dirty || sdirty ){
 			fputs(l->c, stdout);
 			l->dirty = false;
+			sdirty = true; /* FIXME inserting a \n causes every line afterwards to be redrawn */
 		} else {
 			c_nline();
 		}
@@ -411,33 +415,35 @@ i_draw(void){
 		return ; /* FIXME if we havent loaded a file yet */
 
 	if( ! sstart )
-		sstart = send = fstart;
+		sstart = fstart;
 
 	/* FIXME \n insertion screwing up is caused here, ++oldheight in i_insert fixes this but causes a special case
 	 * and i_loadfile must then set oldheight to 0, very hackish. Could fix by everytime height changes start counting
 	 * from scratch (simple, safe as an error means a resize will fix it but looses some efficiency)
 	 */
 	/* if height has changed, correct the sstart->send range, marking any new additions as dirty */
-	if( nh > oldheight ){
-		for( i=nh-oldheight; i>1; --i )
+	/* FIXME
+	if( nh > height ){
+		for( i=nh-height; i>1; --i )
 			if( send->next ){
-				send = send->next; /* move send down */
+				send = send->next;
 				send->dirty = true;
 			} else
 				break;
-	} else if( nh < oldheight ){
-		for( i=oldheight-nh; i>1; --i )
+	} else if( nh < height ){
+		for( i=height-nh; i>1; --i )
 			if( send->prev )
-				send = send->prev; /* move send up */
+				send = send->prev;
 			else
 				break;
 	}
-	oldheight = nh;
+	*/
+	height = nh;
 
 	/* if the width has changed, every line needs to be redrawn so we can see the missing characters */
-	if( nw > oldwidth )
+	if( nw > width )
 		sdirty = true;
-	oldwidth = nw;
+	width = nw;
 
 	/* find cursor column */
 	for(i=0, ccol=1; i < cur.o; i += i_utf8len(&(cur.l->c[i])), ++ccol) ;
@@ -449,6 +455,24 @@ i_draw(void){
 			i_drawscr(sdirty, i, ccol);
 			return;
 		}
+	/* continue searching off screen using old l */
+	for( i=1; l; ++i, l=l->next ){
+		if( l == cur.l ){
+			if( i > nh ){
+				/* if i is greater than screen heights, scrolling wont save us anything, so have to redraw
+				 * print lines such that h/2 is cur.l */
+				/* FIXME adjust sstart and send, set dirty lines */
+			} else {
+				/*	   scroll up by i
+				 *	   goto start
+				 *	   draw i lines - draw last highlighted
+				 */
+				/* FIXME adjust sstart and send, set dirty lines */
+			}
+			i_drawscr(sdirty, i, ccol);
+			return;
+		}
+	}
 	for( l=fstart, i=1; l!=sstart && l->next; ++i, l=l->next ){
 		if( l == cur.l ){
 			if( i > nh ){
@@ -459,23 +483,6 @@ i_draw(void){
 				/*    scroll down by i
 				 *     goto sstart
 				 *     draw i line - draw first highlighted
-				 */
-				/* FIXME adjust sstart and send, set dirty lines */
-			}
-			i_drawscr(sdirty, i, ccol);
-			return;
-		}
-	}
-	for( l=send, i=1; l!=fend && l->next; ++i, l=l->next ){
-		if( l == cur.l ){
-			if( i > nh ){
-				/* if i is greater than screen heights, scrolling wont save us anything, so have to redraw
-				 * print lines such that h/2 is cur.l */
-				/* FIXME adjust sstart and send, set dirty lines */
-			} else {
-				/*	   scroll up by i
-				 *	   goto start
-				 *	   draw i lines - draw last highlighted
 				 */
 				/* FIXME adjust sstart and send, set dirty lines */
 			}
