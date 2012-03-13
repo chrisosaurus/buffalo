@@ -115,7 +115,8 @@ f_suspend(const Arg *arg){
 void /* mark operations, determine which by arg->c g is goto mark, s is set mark, t(toggle) is set and goto */
 f_mark(const Arg *arg){
 	if( arg->c == 'g' )
-		cur = mark;
+		if( mark.l )
+			cur = mark;
 	else if( arg->c == 's' )
 		mark = cur;
 	else if( arg->c == 't' ){
