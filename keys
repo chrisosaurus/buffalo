@@ -1,9 +1,9 @@
 ----- ------ ----- ------ -----  ----- ------ ----- ------ -----
 quit  write                            SOF    uscr  EOF         
-             edit  run    smk          SOL    uchr  EOL         
+             edit  run    g&smk        SOL    uchr  EOL         
 ----- ------ ----- ------ -----  ----- ------ ----- ------ -----
-      paste  del          g&smk  \nbf  lwrd   dscr  rwrd        
-      sel    cut   search gmk    \naf  lchr   dchar rchar       
+      paste  del          gmk    \nbf  lwrd   dscr  rwrd        
+      sel    cut   search smk    \naf  lchr   dchar rchar       
 ----- ------ ----- ------ -----  ----- ------ ----- ------ -----
 
 in a key such as

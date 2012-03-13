@@ -50,6 +50,7 @@ static Filepos sels = {0, 0}, sele = {0, 0}; /* start and end of selection */
 static tstate orig; /* original terminal state */
 static char *curfile; /* current file name */
 static int height=0, width=0; /* height last time we drew */
+static Filepos mark = {0,0}; /* mark in file */
 
 /** Internal functions **/
 static Filepos i_insert(Filepos pos, const char *buf); /* insert buf at pos and return new filepos after the inserted char */
@@ -83,6 +84,7 @@ static void f_cur(const Arg *arg); /* call arg.func(cur) and set cur to return v
 static void f_quit(const Arg *arg); /* ignore arg, tidyup and quit */
 static void f_write(const Arg *arg); /* ignore arg, save file to curfile */
 static void f_suspend(const Arg *arg); /* suspend to terminal */
+static void f_mark(const Arg *arg); /* perform mark operation, g is goto, s is set, t(toggle) is set and goto old */
 
 #include "config.h"
 
@@ -108,6 +110,19 @@ f_suspend(const Arg *arg){
 	t_clear();
 	signal(SIGCONT, i_sigcont);
 	raise(SIGSTOP);
+}
+
+void /* mark operations, determine which by arg->c g is goto mark, s is set mark, t(toggle) is set and goto */
+f_mark(const Arg *arg){
+	if( arg->c == 'g' )
+		cur = mark;
+	else if( arg->c == 's' )
+		mark = cur;
+	else if( arg->c == 't' ){
+		Filepos nmark = cur;
+		cur = mark;
+		mark = nmark;
+	}
 }
 
 /* Movement functions definitions */

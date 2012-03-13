@@ -8,7 +8,6 @@ implement backspace and delete
 fix tab alignment issue
 
 goto line
-set / goto / goto&set mark
 \n bf/af cur line
 selection / paste / cut / delete
 search

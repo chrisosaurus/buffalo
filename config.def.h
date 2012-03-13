@@ -24,6 +24,10 @@ static const Key keys[] = {
 	{ ALT('o'), f_cur, { .m_func = m_endofline } },
 	{ ALT('O'), f_cur, { .m_func = m_endoffile } },
 
+	{ ALT('t'), f_mark, { .c = 't' } },
+	{ ALT('g'), f_mark, { .c = 's' } },
+	{ ALT('G'), f_mark, { .c = 'g' } },
+
 	{ CTRL('Z'), f_suspend, { .c=0 } },
 
 	/*{ ALT('h'), f_cur, { .m_func = m_SOMETHING } },
