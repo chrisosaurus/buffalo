@@ -31,6 +31,7 @@ typedef struct { /* position in file */
 } Filepos;
 
 typedef union { /* argument for callback funcs */
+	const int i;
 	const char *c;
 	Filepos (*m_func)(Filepos);
 } Arg;
@@ -51,6 +52,7 @@ static tstate orig; /* original terminal state */
 static char *curfile; /* current file name */
 static int height=0, width=0; /* height last time we drew */
 static Filepos mark = {0,0}; /* mark in file */
+static bool modified=false; /* has the file been modified since last save or load */
 
 /** Internal functions **/
 static Filepos i_insert(Filepos pos, const char *buf); /* insert buf at pos and return new filepos after the inserted char */
@@ -81,7 +83,7 @@ static Filepos m_nextscreen(Filepos pos);
 
 /** Functions to bind to a key **/
 static void f_cur(const Arg *arg); /* call arg.func(cur) and set cur to return value */
-static void f_quit(const Arg *arg); /* ignore arg, tidyup and quit */
+static void f_quit(const Arg *arg); /* tidyup and quit, if arg->c==0 then will not exit with modifications, otherwise will exit regardless */
 static void f_write(const Arg *arg); /* ignore arg, save file to curfile */
 static void f_suspend(const Arg *arg); /* suspend to terminal */
 static void f_mark(const Arg *arg); /* perform mark operation, g is goto, s is set, t(toggle) is set and goto old */
@@ -96,6 +98,8 @@ f_cur(const Arg *arg){
 
 void /* tidyup and quit */
 f_quit(const Arg *arg){
+	if( arg->i == 0 && modified )
+		return;
 	i_tidyup();
 	exit(0);
 }
@@ -315,7 +319,8 @@ i_insert(Filepos pos, const char *buf){
 			++pos.o;
 		}
 	}
-	return pos; /* FIXME should point at last char inserted*/
+	modified = true;
+	return pos;
 }
 
 Filepos /*trivial backspace */
@@ -348,6 +353,7 @@ i_backspace(Filepos pos){
 		--pos.l->len;
 	}
 	height = 0; /* set height to 0 to indicate sdirty */
+	modified = true;
 	return pos;
 }
 
@@ -567,6 +573,7 @@ i_loadfile(char *fname){
 	free(buf);
 	cur.l = fstart;
 	cur.o = 0;
+	modified = false;
 	return 0;
 }
 
@@ -588,6 +595,7 @@ i_savefile(char *fname){
 			break;
 		}
 
+	modified = false;
 	return error;
 }
 

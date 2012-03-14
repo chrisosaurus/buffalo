@@ -15,6 +15,7 @@ static const Key keys[] = {
 	{ ALT('L'), f_cur, { .m_func = m_nextword } },
 	{ ALT('J'), f_cur, { .m_func = m_prevword } },
 	{ ALT('q'), f_quit, { .c=0 } },
+	{ ALT('Q'), f_quit, { .c=1 } },
 	{ ALT('w'), f_write, { .c=0 } },
 
 	{ ALT('u'), f_cur, { .m_func = m_startofline } },

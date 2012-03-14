@@ -3,8 +3,8 @@ codes.* will eventually become its own library, maybe stw (simple termcode wrapp
 
 
 buffalo TODO:
-implement 'proper' off screen movement
-screen movement
+'proper' screen movement
+selection
 
 goto line
 \n bf/af cur line
@@ -12,3 +12,4 @@ selection / paste / cut / delete
 search
 synta highlighting
 undo
+
