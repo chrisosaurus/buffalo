@@ -134,7 +134,7 @@ m_prevchar(Filepos pos){
 	if( --pos.o < 0 ){
 		if( pos.l->prev ){
 			pos.l = pos.l->prev;
-			pos.o = pos.l->len > 0 ? pos.l->len - 1 : 0;
+			pos.o = pos.l->len;
 		} else
 			pos.o = 0;
 	}
@@ -145,12 +145,12 @@ Filepos /* move cursor right one char */
 m_nextchar(Filepos pos){
 	if( ! pos.l )
 		return pos;
-	if( ++pos.o >= pos.l->len ){
+	if( ++pos.o > pos.l->len ){
 		if( pos.l->next ){
 			pos.l = pos.l->next;
 			pos.o = 0;
 		} else
-			pos.o = pos.l->len > 0 ? pos.l->len - 1 : 0;
+			pos.o = pos.l->len;
 	}
 	return pos;
 }
@@ -160,8 +160,8 @@ m_prevline(Filepos pos){
 	if( ! pos.l || ! pos.l->prev )
 		return pos;
 	pos.l = pos.l->prev;
-	if( pos.o >= pos.l->len )
-		pos.o = pos.l->len > 0 ? pos.l->len - 1 : 0;
+	if( pos.o > pos.l->len )
+		pos.o = pos.l->len;
 	return pos;
 }
 
@@ -170,8 +170,8 @@ m_nextline(Filepos pos){
 	if( ! pos.l || ! pos.l->next )
 		return pos;
 	pos.l = pos.l->next;
-	if( pos.o >= pos.l->len )
-		pos.o = pos.l->len > 0 ? pos.l->len - 1 : 0;
+	if( pos.o > pos.l->len )
+		pos.o = pos.l->len;
 	return pos;
 }
 
@@ -187,7 +187,7 @@ Filepos /* move cursor to end of line */
 m_endofline(Filepos pos){
 	if( ! pos.l )
 		return pos;
-	pos.o = pos.l->len > 0 ? pos.l->len -1 : 0;
+	pos.o = pos.l->len;
 	return pos;
 }
 
@@ -205,7 +205,7 @@ m_endoffile(Filepos pos){
 	if( ! pos.l || ! fend )
 		return pos;
 	pos.l = fend;
-	pos.o = pos.l->len > 0 ? pos.l->len -1 : 0; /* FIXME end of start of last line? */
+	pos.o = pos.l->len;
 	return pos;
 }
 
@@ -287,9 +287,8 @@ i_insert(Filepos pos, const char *buf){
 			if( pos.o < l->len )
 				i_insert((Filepos){ln, 0}, &(l->c[pos.o]));
 			/* insert c followed by \0 */
-			l->c[pos.o] = c;
-			l->len = pos.o+1;
-			l->c[pos.o+1] = '\0';
+			l->c[pos.o] = '\0';
+			l->len = pos.o;
 			l->dirty = true;
 			/* possibly need to correct fend if we have gone past it */
 			if( l == fend )
@@ -322,14 +321,14 @@ Filepos /*trivial backspace */
 i_backspace(Filepos pos){
 	if( ! pos.l )
 		return pos;
-	if( pos.o == 0 ){
+	if( pos.o <= 0 ){
 		if( ! pos.l->prev ) return pos;
 		Line *l = pos.l->prev;
 		int nl = pos.l->len + l->len -1;
 		l->mul = nl / LINESIZE +1;
 
-		if( ! (realloc(l->c, l->mul*LINESIZE)) ) i_die("failed to realloc in i_backspace\n");
-		if( ! (memcpy( &(l->c[l->len-1]), pos.l->c, pos.l->len )) ) i_die("failed to memcpy in i_backspace\n");
+		if( ! (l->c = realloc(l->c, l->mul*LINESIZE)) ) i_die("failed to realloc in i_backspace\n");
+		if( ! (memcpy( &(l->c[l->len]), pos.l->c, pos.l->len )) ) i_die("failed to memcpy in i_backspace\n");
 
 		pos.o = l->len;
 		l->len = nl;
@@ -428,9 +427,8 @@ i_drawscr(bool sdirty, int crow, int ccol){
 			fputs(l->c, stdout);
 			l->dirty = false;
 			sdirty = true; /* FIXME inserting a \n causes every line afterwards to be redrawn */
-		} else {
-			c_nline();
 		}
+		c_nline();
 	}
 	for( ; n<height; ++n ){
 		c_nline();
@@ -586,7 +584,7 @@ i_savefile(char *fname){
 		i_die("failed to open file for writing in savefile");
 
 	for( l=fstart; l; l=l->next )
-		if( write(fd, l->c, l->len) == -1 ){
+		if( write(fd, l->c, l->len) == -1 || write(fd, "\n", 1) == -1){
 			error = true;
 			break;
 		}
