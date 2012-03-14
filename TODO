@@ -4,12 +4,11 @@ codes.* will eventually become its own library, maybe stw (simple termcode wrapp
 
 buffalo TODO:
 implement 'proper' off screen movement
-fix tab alignment issue
+screen movement
 
 goto line
 \n bf/af cur line
 selection / paste / cut / delete
 search
-screen movement
 synta highlighting
 undo

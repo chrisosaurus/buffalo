@@ -326,11 +326,11 @@ i_backspace(Filepos pos){
 	if( pos.o <= 0 ){
 		if( ! pos.l->prev ) return pos;
 		Line *l = pos.l->prev;
-		int nl = pos.l->len + l->len -1;
+		int nl = pos.l->len + l->len;
 		l->mul = nl / LINESIZE +1;
 
 		if( ! (l->c = realloc(l->c, l->mul*LINESIZE)) ) i_die("failed to realloc in i_backspace\n");
-		if( ! (memcpy( &(l->c[l->len]), pos.l->c, pos.l->len )) ) i_die("failed to memcpy in i_backspace\n");
+		if( ! (memcpy( &(l->c[l->len]), pos.l->c, pos.l->len+1 )) ) i_die("failed to memcpy in i_backspace\n");
 
 		pos.o = l->len;
 		l->len = nl;
@@ -467,10 +467,11 @@ i_draw(void){
 		sstart = fstart;
 
 	/* if the width or height has changed, every line needs to be redrawn so we can see the missing characters */
-	if( nh != height || nw != width )
+	if( nh != height || nw != width ){
 		sdirty = true;
-	height = nh;
-	width = nw;
+		height = nh;
+		width = nw;
+	}
 
 	/* find cursor column */
 	for(i=0, ccol=1; i < cur.o; i += i_utf8len(&(cur.l->c[i]))){
@@ -479,7 +480,6 @@ i_draw(void){
 		else
 			++ ccol;
 	}
-
 
 	/* handle the three cases of cursor position; on screen, before screen, and after screen resp. */
 	for( l=sstart, i=1; l && i < nh; ++i, l=l->next )
@@ -501,6 +501,7 @@ i_draw(void){
 				 */
 				/* FIXME adjust sstart and send, set dirty lines */
 			}
+			sdirty = true;
 			sstart = l; /* FIXME temporary hack */
 			i_drawscr(sdirty, i, ccol);
 			return;
@@ -519,6 +520,7 @@ i_draw(void){
 				 */
 				/* FIXME adjust sstart and send, set dirty lines */
 			}
+			sdirty = true;
 			sstart = l; /* FIXME temporary hack */
 			i_drawscr(sdirty, i, ccol);
 			return;
