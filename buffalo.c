@@ -296,6 +296,7 @@ i_insert(Filepos pos, const char *buf){
 			/* actually pos has to be the character after the \n, as in the first char of the new line */
 			l = ln;
 			pos = (Filepos){l, 0};
+			height = 0; /* insertin a \n requires a redraw of the screen */
 		} else {
 			if( l->len+2 >= LINESIZE*l->mul )
 				if( ! (l->c = realloc(l->c, LINESIZE*(++l->mul))) ) i_die("failed to realloc in insert");
@@ -321,6 +322,7 @@ Filepos /*trivial backspace */
 i_backspace(Filepos pos){
 	if( ! pos.l )
 		return pos;
+
 	if( pos.o <= 0 ){
 		if( ! pos.l->prev ) return pos;
 		Line *l = pos.l->prev;
@@ -333,19 +335,20 @@ i_backspace(Filepos pos){
 		pos.o = l->len;
 		l->len = nl;
 		l->next = pos.l->next;
+		l->dirty = true;
 		if( l->next )
 			l->next->prev = l;
 		free(pos.l->c);
 		free(pos.l);
 		pos.l = l;
-		return pos;
 	} else {
 		if( ! memmove( &(pos.l->c[pos.o-1]), &(pos.l->c[pos.o]), (pos.l->len - pos.o)+1 ) )
 		 i_die("failed to memmove in i_backspace\n");	/* FIXME off by one in length? */
 		--pos.o;
 		--pos.l->len;
-		return pos;
 	}
+	height = 0; /* set height to 0 to indicate sdirty */
+	return pos;
 }
 
 int /* return number of bytes of utf char c */
@@ -412,21 +415,32 @@ i_odraw(void){
 void /* draw all dirty lines on screen or draw all lines if sdirty */
 i_drawscr(bool sdirty, int crow, int ccol){
 	Line *l;
-	int n=1; /* n is line number, c is char counter */
+	int n=1, c=0, i=0; /* n is line number, c is the char counter, i is used within the printing loop */
 
 	c_line0();
 	for( n=1, l=sstart; l && n<height; l=l->next, ++n ){
 		if( l == cur.l ){
 			c_clearline();
 			b_blue();
-			fputs(l->c, stdout);
+			for( c=0; c<l->len && c<width; ++c ){
+				if( l->c[c] == '\t' )
+					for( i=0; i<TABSTOP; ++i)
+						fputc(' ', stdout);
+				else
+					fputc(l->c[c], stdout);
+			}
 			b_default();
 			l->dirty = true;
 		} else if( l->dirty || sdirty ){
 			c_clearline();
-			fputs(l->c, stdout);
+			for( c=0; c<l->len && c<width; ++c ){
+				if( l->c[c] == '\t' )
+					for( i=0; i<TABSTOP; ++i)
+						fputc(' ', stdout);
+				else
+					fputc(l->c[c], stdout);
+			}
 			l->dirty = false;
-			sdirty = true; /* FIXME inserting a \n causes every line afterwards to be redrawn */
 		}
 		c_nline();
 	}
@@ -452,38 +466,21 @@ i_draw(void){
 	if( ! sstart )
 		sstart = fstart;
 
-	/* FIXME \n insertion screwing up is caused here, ++oldheight in i_insert fixes this but causes a special case
-	 * and i_loadfile must then set oldheight to 0, very hackish. Could fix by everytime height changes start counting
-	 * from scratch (simple, safe as an error means a resize will fix it but looses some efficiency)
-	 */
-	/* if height has changed, correct the sstart->send range, marking any new additions as dirty */
-	/* FIXME
-	if( nh > height ){
-		for( i=nh-height; i>1; --i )
-			if( send->next ){
-				send = send->next;
-				send->dirty = true;
-			} else
-				break;
-	} else if( nh < height ){
-		for( i=height-nh; i>1; --i )
-			if( send->prev )
-				send = send->prev;
-			else
-				break;
-	}
-	*/
-	height = nh;
-
-	/* if the width has changed, every line needs to be redrawn so we can see the missing characters */
-	if( nw > width )
+	/* if the width or height has changed, every line needs to be redrawn so we can see the missing characters */
+	if( nh != height || nw != width )
 		sdirty = true;
+	height = nh;
 	width = nw;
 
 	/* find cursor column */
-	for(i=0, ccol=1; i < cur.o; i += i_utf8len(&(cur.l->c[i])), ++ccol) ;
+	for(i=0, ccol=1; i < cur.o; i += i_utf8len(&(cur.l->c[i]))){
+		if( cur.l->c[i] == '\t' )
+			ccol += TABSTOP;
+		else
+			++ ccol;
+	}
 
-	/* FIXME all these loops end one too soon, l!=blah will NOT include blah within its range */
+
 	/* handle the three cases of cursor position; on screen, before screen, and after screen resp. */
 	for( l=sstart, i=1; l && i < nh; ++i, l=l->next )
 		if( l == cur.l ){
@@ -610,10 +607,10 @@ main(int argc, char **argv){
 			cur = i_insert(cur, ch);
 		} else if( ch[0] == 127 ){
 			cur = i_backspace(cur);
-		} else if( ch[0] == 10 ){
+		} else if( ch[0] == 10 && ch[1] == 0 ){
 			cur = i_insert(cur, ch); /* FIXME \n special case */
-		} else if( ch[0] == 9 ){
-			cur = i_insert(cur, "  "); /* FIXME \t special case */
+		} else if( ch[0] == 9 && ch[1] == 0 ){
+			cur = i_insert(cur, ch); /* FIXME \t special case */
 		} else if( ISALT(ch[0]) || ISCTRL(ch[0]) ){
 			for( i=0; i<LENGTH(keys); ++i )
 				if( memcmp( ch, keys[i].c, sizeof(keys[i].c)) == 0 ){

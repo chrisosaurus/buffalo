@@ -1,10 +1,8 @@
-static int tabstop = 2;
-
 #define ALT(ch) { 0x1b, ch }
 #define CTRL(ch) { (ch^0x40) }
 
 /* defines width of a tab on screen */
-#define TABSTOP 8
+#define TABSTOP 2
 
 static const Key keys[] = {
 	/* c        m_func    Arg */
