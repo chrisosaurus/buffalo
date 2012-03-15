@@ -231,23 +231,23 @@ m_nextword(Filepos pos){
 
 Filepos /* move cursor to next screen */
 m_nextscreen(Filepos pos){
-	/* FIXME
-	if( ! pos.l || ! send )
+	int i=0;
+	if( ! pos.l )
 		return pos;
-	pos.o = 0;
-	pos.l = send->next ? send->next : send ;
-	*/
+	for( i=0; i<height && pos.l->next; ++i, pos.l=pos.l->next ) ;
+	if( pos.o > pos.l->len )
+		pos.o = pos.l->len;
 	return pos;
 }
 
 Filepos /* move cursor to prev screen */
 m_prevscreen(Filepos pos){
-	/* FIXME
-	if( ! pos.l || ! sstart )
+	int i=0;
+	if( ! pos.l )
 		return pos;
-	pos.o = 0;
-	pos.l = sstart->prev ? sstart->prev : sstart;
-	*/
+	for( i=0; i<height && pos.l->prev; ++i, pos.l=pos.l->prev ) ;
+	if( pos.o > pos.l->len )
+		pos.o = pos.l->len;
 	return pos;
 }
 
