@@ -388,38 +388,6 @@ i_tidyup(void){
 	fflush(stdout);
 }
 
-void /* perform actual drawing to screen */
-i_odraw(void){
-	int nh = t_getheight();
-	int i=0, crow=0, ccol=0;
-
-	t_clear();
-	c_line0();
-
-	if( ! sstart )
-		sstart = fstart;
-
-	/* FIXME force cursor to be on screen, TODO work out if we can calculate crow and ccol here */
-	Line *l = sstart;
-	for( ; i<(nh-1) && l; ++i, l=l->next ){
-		if( l == cur.l )
-			crow = i;
-		fputs(l->c, stdout);
-		l->dirty = false;
-	}
-	if( i == nh-1 ){
-		write(1, l->c, l->len-1); /* FIXME ideally we should get rid of this in favour of buffered */
-		l->dirty = false;
-		if( l == cur.l )
-			crow = nh;
-	}
-
-	/* find cursor column */
-	for(i=0, ccol=0; i < cur.o; i += i_utf8len(&(cur.l->c[i])), ++ccol) ;
-	c_goto(crow+1, ccol+1); /* FIXME should I move this elsewhere */
-	fflush(stdout); /* FIXME need to add a note to codes about how fflush-ing is needed */
-}
-
 void /* draw all dirty lines on screen or draw all lines if sdirty */
 i_drawscr(bool sdirty, int crow, int ccol){
 	Line *l;
@@ -638,5 +606,6 @@ main(int argc, char **argv){
 	}
 	i_tidyup();
 }
+
 
 
