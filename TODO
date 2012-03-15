@@ -3,7 +3,6 @@ codes.* will eventually become its own library, maybe stw (simple termcode wrapp
 
 
 buffalo TODO:
-'proper' screen movement
 selection
 
 goto line
@@ -12,4 +11,3 @@ selection / paste / cut / delete
 search
 synta highlighting
 undo
-

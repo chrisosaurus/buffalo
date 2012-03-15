@@ -463,7 +463,7 @@ void /* make sure cursor is on screen and screen is correct size, delegate to i_
 i_draw(void){
 	int nh = t_getheight(), nw = t_getwidth();
 	bool sdirty = false; /* is the entire range sstart->send dirty */
-	int i=0, ccol=0; /* i is used as a general counter and as crow */
+	int i=0, ccol=0; /* i is used as a general counter and as crow, ccol is column count */
 	Line *l;
 
 	if( ! fstart )
@@ -507,6 +507,7 @@ i_draw(void){
 				 */
 				/* FIXME adjust sstart and send, set dirty lines */
 			}
+			for( i=nh/2; l->prev && i > 0; --i, l=l->prev ) ;
 			sdirty = true;
 			sstart = l; /* FIXME temporary hack */
 			i_drawscr(sdirty, i, ccol);
@@ -526,6 +527,7 @@ i_draw(void){
 				 */
 				/* FIXME adjust sstart and send, set dirty lines */
 			}
+			for( i=nh/2; l->prev && i > 0; --i, l=l->prev ) ;
 			sdirty = true;
 			sstart = l; /* FIXME temporary hack */
 			i_drawscr(sdirty, i, ccol);
@@ -634,4 +636,5 @@ main(int argc, char **argv){
 	}
 	i_tidyup();
 }
+
 
