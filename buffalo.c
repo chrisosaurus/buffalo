@@ -48,7 +48,7 @@ static Line *fstart=0, *fend=0; /* first and last lines */
 static Line *sstart=0; /* first line on screen */
 static Filepos cur = { 0, 0 }; /* current position in file */
 static Filepos sels = {0, 0}, sele = {0, 0}; /* start and end of selection */
-static tstate orig; /* original terminal state */
+static tstate orig, nstate; /* original and new terminal state */
 static char *curfile; /* current file name */
 static int height=0, width=0; /* height last time we drew */
 static Filepos mark = {0,0}; /* mark in file */
@@ -112,6 +112,7 @@ f_write(const Arg *arg){
 void /* suspend to terminal */
 f_suspend(const Arg *arg){
 	t_clear();
+	fflush(stdout);
 	signal(SIGCONT, i_sigcont);
 	raise(SIGSTOP);
 }
@@ -253,6 +254,7 @@ m_prevscreen(Filepos pos){
 
 void /* what to do on a SIGCONT */
 i_sigcont(int unused){
+	t_setstate(&nstate);
 	height=0;
 	i_draw();
 }
@@ -370,7 +372,7 @@ i_utf8len(const char *c){
 void
 i_setup(void){
 	t_getstate(&orig);
-	tstate nstate = t_initstate(&orig);
+	nstate = t_initstate(&orig);
 	t_setstate(&nstate);
 	t_clear();
 	f_normal();
@@ -507,10 +509,10 @@ i_draw(void){
 				 */
 				/* FIXME adjust sstart and send, set dirty lines */
 			}
-			for( i=nh/2; l->prev && i > 0; --i, l=l->prev ) ;
+			for( i=nh/2; l->prev && i > 1; --i, l=l->prev ) ;
 			sdirty = true;
-			sstart = l; /* FIXME temporary hack */
-			i_drawscr(sdirty, i, ccol);
+			sstart = l;
+			i_drawscr(sdirty, nh/2, ccol);
 			return;
 		}
 	}
@@ -527,10 +529,10 @@ i_draw(void){
 				 */
 				/* FIXME adjust sstart and send, set dirty lines */
 			}
-			for( i=nh/2; l->prev && i > 0; --i, l=l->prev ) ;
+			for( i=nh/2; l->prev && i > 1; --i, l=l->prev ) ;
 			sdirty = true;
-			sstart = l; /* FIXME temporary hack */
-			i_drawscr(sdirty, i, ccol);
+			sstart = l;
+			i_drawscr(sdirty, nh/2, ccol);
 			return;
 		}
 	}
