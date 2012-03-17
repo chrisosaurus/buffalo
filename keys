@@ -1,9 +1,9 @@
 ----- ------ ----- ------ -----  ----- ------ ----- ------ -----
-Quit! was                        balgn SOF    uscr  EOF         
-quit  write  read  run    g&smk  talgn SOL    uchr  EOL         
+Quit! was    run   undo   findB  balgn SOF    uscr  EOF         
+quit  write  read         findF  talgn SOL    uchr  EOL         
 ----- ------ ----- ------ -----  ----- ------ ----- ------ -----
-      paste  del          gmk    \nbf  lwrd   dscr  rwrd        
-      sel    cut   search smk    \naf  lchr   dchar rchar       
+      cut    clsel sels   g&smk  \nbf  lwrd   dscr  rwrd        
+      copy   paste sele   smk    \naf  lchr   dchar rchar       
 ----- ------ ----- ------ -----  ----- ------ ----- ------ -----
 
 in a key such as
@@ -15,17 +15,19 @@ top is the uppercase and bottom is the lower case bindings
 all keys are bound against a mod (alt or ctrl)
 
 SOF/EOF SOL/EOL start of/end of line or file
-sel toggle select (selection is copy)
 \nbf \naf insert new line before/after current and place curs there
 uscr/dscr are moving by screens
 uchr/dchr/lchr/rchar moving by chars
 lwrd/rwrd moving by word/tokens (whitespace or non alphanumeric?)
-smk/gmk set/goto mark
+smk set mark
 g&smk goto mark and then set at old pos
 read open a new file (name in selection or re read curfile if none )
 run runs command in current with selection as its stdin, inserting at pos and removing current
 balgn/talgn make current line either top or bottom of screen
 was = write as (save file as filename in current selection)
+findB/findF search (using current copied text as input) Backwards/Fowards
+sels/sele = set selection start/end to cur
+clsel = clear selection
 
 need to consider:
-undo (could combine read and run keys and make undo r)
+goto line number, how do we get line number? selection, possibly use the y

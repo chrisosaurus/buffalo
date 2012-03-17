@@ -86,7 +86,8 @@ static void f_cur(const Arg *arg); /* call arg.func(cur) and set cur to return v
 static void f_quit(const Arg *arg); /* tidyup and quit, if arg->c==0 then will not exit with modifications, otherwise will exit regardless */
 static void f_write(const Arg *arg); /* ignore arg, save file to curfile */
 static void f_suspend(const Arg *arg); /* suspend to terminal */
-static void f_mark(const Arg *arg); /* perform mark operation, g is goto, s is set, t(toggle) is set and goto old */
+static void f_mark(const Arg *arg); /* perform mark operation based on arg->i, 0 is set, 1 is set & goto old */
+static void f_sel(const Arg *arg); /* perform selecton operation based on arg->i, 0 is set end, 1 is set start, 2 is clear both */
 
 #include "config.h"
 
@@ -117,17 +118,30 @@ f_suspend(const Arg *arg){
 	raise(SIGSTOP);
 }
 
-void /* mark operations, determine which by arg->c g is goto mark, s is set mark, t(toggle) is set and goto */
+void /* mark operations, determine which by arg->c: 0 is set, 1 is set & goto */
 f_mark(const Arg *arg){
-	if( arg->c[0] == 'g' ){
+	if( arg->i ){
+		Filepos nmark = cur;
 		if( mark.l )
 			cur = mark;
-	} else if( arg->c[0] == 's' )
-		mark = cur;
-	else if( arg->c[0] == 't' ){
-		Filepos nmark = cur;
-		cur = mark;
 		mark = nmark;
+	} else
+		mark = cur;
+}
+
+void /* selection operations, determine which by arg->i: 0 is set sele, 1 is set sels, 2 is clear */
+f_sel(const Arg *arg){
+	switch( arg->i ){
+		case 0:
+			sele = cur;
+			break;
+		case 1:
+			sels = cur;
+			break;
+		case 2:
+			sele = (Filepos){0, 0};
+			sels = (Filepos){0, 0};
+			break;
 	}
 }
 
@@ -606,6 +620,7 @@ main(int argc, char **argv){
 	}
 	i_tidyup();
 }
+
 
 
 

@@ -23,9 +23,12 @@ static const Key keys[] = {
 	{ ALT('o'), f_cur, { .m_func = m_endofline } },
 	{ ALT('O'), f_cur, { .m_func = m_endoffile } },
 
-	{ ALT('t'), f_mark, { .c = "t" } },
-	{ ALT('g'), f_mark, { .c = "s" } },
-	{ ALT('G'), f_mark, { .c = "g" } },
+	{ ALT('G'), f_mark, { .i = 0 } },
+	{ ALT('g'), f_mark, { .i = 1 } },
+
+	{ ALT('F'), f_sel, { .i=0 } },
+	{ ALT('f'), f_sel, { .i=1 } },
+	{ ALT('D'), f_sel, { .i=2 } },
 
 	{ CTRL('Z'), f_suspend, { .c=0 } },
 
@@ -33,3 +36,4 @@ static const Key keys[] = {
 	{ ALT('H'), f_cur, { .m_func = m_SOMETHING } },
 	*/
 };
+
