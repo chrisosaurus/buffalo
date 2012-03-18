@@ -30,6 +30,9 @@ static const Key keys[] = {
 	{ ALT('f'), f_sel, { .i=1 } },
 	{ ALT('D'), f_sel, { .i=2 } },
 
+	{ ALT('H'), f_newl, { .i=0 } },
+	{ ALT('h'), f_newl, { .i=1 } },
+
 	{ CTRL('Z'), f_suspend, { .c=0 } },
 
 	/*{ ALT('h'), f_cur, { .m_func = m_SOMETHING } },

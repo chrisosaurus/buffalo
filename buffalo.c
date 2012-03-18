@@ -66,6 +66,7 @@ static bool i_savefile(char *fname); /* write the fstart to fend to the file nam
 static void i_die(char *c); /* reset terminal, print c to stderr and exit */
 static Filepos i_backspace(Filepos pos); /* trivial backspace, delete prev char */
 static void i_sigcont(int unused); /* what to do on a SIGCONT, used by f_suspend */
+static Line* i_newline(int mul); /* return new line containing mul * LINESIZE chars */
 
 /** Movement functions **/
 static Filepos m_startofline(Filepos pos);
@@ -88,6 +89,7 @@ static void f_write(const Arg *arg); /* ignore arg, save file to curfile */
 static void f_suspend(const Arg *arg); /* suspend to terminal */
 static void f_mark(const Arg *arg); /* perform mark operation based on arg->i, 0 is set, 1 is set & goto old */
 static void f_sel(const Arg *arg); /* perform selecton operation based on arg->i, 0 is set end, 1 is set start, 2 is clear both */
+static void f_newl(const Arg *arg); /* insert new line either before (arg->i == 0), or after (arg->i == 1) current line */
 
 #include "config.h"
 
@@ -142,6 +144,33 @@ f_sel(const Arg *arg){
 			sele = (Filepos){0, 0};
 			sels = (Filepos){0, 0};
 			break;
+	}
+}
+
+void /* insert newline before (arg->i == 0) or after (arg->i == 1) */
+f_newl(const Arg *arg){
+	Line *l = i_newline(1);
+	modified = true;
+	if( arg->i ){
+		l->prev = cur.l;
+		l->next = cur.l->next;
+		if( cur.l->next )
+			cur.l->next->prev = l;
+		else
+			fend = l;
+		cur.l->next = l;
+		cur.l = l;
+		cur.o = 0;
+	} else {
+		l->next = cur.l;
+		l->prev = cur.l->prev;
+		if( cur.l->prev )
+			cur.l->prev->next = l;
+		else
+			fstart = l;
+		cur.l->prev = l;
+		cur.l = l;
+		cur.o = 0;
 	}
 }
 
@@ -282,6 +311,18 @@ i_die(char *c){
 }
 
 /* internal function definitions */
+Line* /* return new line containing mul * LINESIZE chars */
+i_newline(int mul){
+	Line *l;
+	if( ! (l = (Line *) malloc(sizeof(Line))) ) i_die("failed to malloc in i_newline");
+	l->mul = mul;
+	if( ! (l->c = (char *) calloc(sizeof(char), LINESIZE * l->mul)) ) i_die("failed to calloc in i_newline");
+	l->c[0] = '\0';
+	l->len = 0;
+	l->dirty = true;
+	return l;
+}
+
 Filepos /* insert c at post and return new filepos after the inserted char */
 i_insert(Filepos pos, const char *buf){
 	int i;
@@ -291,12 +332,10 @@ i_insert(Filepos pos, const char *buf){
 		return pos;
 	for( i=0, c=buf[0]; buf[i] != '\0'; c=buf[++i] ){
 		if( c == '\n' || c == '\r' ){
-			if( ! (ln = (Line *) malloc(sizeof(Line))) ) i_die("failed to malloc in insert");
+			ln = i_newline(l->mul);
+			/*if( ! (ln = (Line *) malloc(sizeof(Line))) ) i_die("failed to malloc in insert");
 			if( ! (ln->c = (char *) calloc(sizeof(char), LINESIZE * l->mul)) ) i_die("failed to calloc in insert");
-			ln->mul = l->mul;
-			ln->len = 0;
-			ln->c[0] = '\0';
-			ln->dirty = true;
+			*/
 			/* correct pointers */
 			ln->prev = l;
 			ln->next = l->next;

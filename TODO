@@ -3,11 +3,10 @@ codes.* will eventually become its own library, maybe stw (simple termcode wrapp
 
 
 buffalo TODO:
-selection
+highlighting of selection
 
 goto line
-\n bf/af cur line
-selection / paste / cut / delete
+paste / cut / copy
 search
 synta highlighting
 undo

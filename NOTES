@@ -1,3 +1,3 @@
 Dev Notes:
 cur.o <= cur.l->len (as cur.l->c[cur.l->len] == \0)
-try to minimise writing of global variables, feel free to read them however
+try to minimise writing of global variables, feel free to read them however (f_ functions CAN write globals)
