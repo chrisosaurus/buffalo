@@ -3,7 +3,10 @@ codes.* will eventually become its own library, maybe stw (simple termcode wrapp
 
 
 buffalo TODO:
-highlighting of selection
+FIX highlighting of selection
+save as
+open(run time specified file, possibly with another already open)
+quit data cleanup
 
 goto line
 paste / cut / copy

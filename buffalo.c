@@ -96,7 +96,10 @@ static void f_newl(const Arg *arg); /* insert new line either before (arg->i == 
 /* Function definitions */
 void /* run the Arg with the current cursor position */
 f_cur(const Arg *arg){
+	if( cur.l )
+		cur.l->dirty = true;
 	cur = arg->m_func(cur);
+	cur.l->dirty = true;
 }
 
 void /* tidyup and quit */
@@ -135,12 +138,22 @@ void /* selection operations, determine which by arg->i: 0 is set sele, 1 is set
 f_sel(const Arg *arg){
 	switch( arg->i ){
 		case 0:
+			if( sele.l )
+				sele.l->dirty = true;
 			sele = cur;
+			sele.l->dirty = true;
 			break;
 		case 1:
+			if( sels.l )
+				sels.l->dirty = true;
 			sels = cur;
+			sels.l->dirty = true;
 			break;
 		case 2:
+			if( sels.l )
+				sels.l->dirty = true;
+			if( sele.l )
+				sele.l->dirty = true;
 			sele = (Filepos){0, 0};
 			sels = (Filepos){0, 0};
 			break;
@@ -333,9 +346,6 @@ i_insert(Filepos pos, const char *buf){
 	for( i=0, c=buf[0]; buf[i] != '\0'; c=buf[++i] ){
 		if( c == '\n' || c == '\r' ){
 			ln = i_newline(l->mul);
-			/*if( ! (ln = (Line *) malloc(sizeof(Line))) ) i_die("failed to malloc in insert");
-			if( ! (ln->c = (char *) calloc(sizeof(char), LINESIZE * l->mul)) ) i_die("failed to calloc in insert");
-			*/
 			/* correct pointers */
 			ln->prev = l;
 			ln->next = l->next;
@@ -403,7 +413,7 @@ i_backspace(Filepos pos){
 		pos.l = l;
 	} else {
 		if( ! memmove( &(pos.l->c[pos.o-1]), &(pos.l->c[pos.o]), (pos.l->len - pos.o)+1 ) )
-		 i_die("failed to memmove in i_backspace\n");	/* FIXME off by one in length? */
+			i_die("failed to memmove in i_backspace\n");	/* FIXME off by one in length? */
 		--pos.o;
 		--pos.l->len;
 	}
@@ -443,40 +453,54 @@ i_tidyup(void){
 
 void /* draw all dirty lines on screen or draw all lines if sdirty */
 i_drawscr(bool sdirty, int crow, int ccol){
+	int (*colold)(void) = b_default;
+	int (*colcur)(void) = b_default;
 	Line *l;
 	int n=1, c=0, i=0; /* n is line number, c is the char counter, i is used within the printing loop */
 
 	c_line0();
 	for( n=1, l=sstart; l && n<height; l=l->next, ++n ){
 		if( l == cur.l ){
+			if( colcur == b_default ){
+				colold = colcur;
+				colcur = b_blue;
+				colcur();
+			}
+		} else if( colcur == b_blue ){
+			colcur = colold;
+			colcur();
+		}
+
+		if( l->dirty || sdirty ){
 			c_clearline();
-			b_blue();
 			for( c=0; c<l->len && c<width; ++c ){
+				if( l == sels.l &&  c == sels.o ){
+					colold = colcur;
+					colcur = b_green;
+					colcur();
+				} else if ( (l == sele.l && c == sele.o) ){
+					colcur = colold;
+					colcur();
+				}
+				
 				if( l->c[c] == '\t' )
-					for( i=0; i<TABSTOP; ++i)
+					for( i=0; i<TABSTOP; ++i )
 						fputc(' ', stdout);
 				else
 					fputc(l->c[c], stdout);
 			}
-			b_default();
-			l->dirty = true;
-		} else if( l->dirty || sdirty ){
-			c_clearline();
-			for( c=0; c<l->len && c<width; ++c ){
-				if( l->c[c] == '\t' )
-					for( i=0; i<TABSTOP; ++i)
-						fputc(' ', stdout);
-				else
-					fputc(l->c[c], stdout);
-			}
-			l->dirty = false;
+			if( colcur == b_default )
+				l->dirty = false;
+			else
+				l->dirty = true;
 		}
 		c_nline();
 	}
 	for( ; n<height; ++n ){
-		c_nline();
 		c_clearline();
+		c_nline();
 	}
+
 	c_goto(crow, ccol);
 	fflush(stdout);
 	return;
@@ -557,7 +581,7 @@ i_draw(void){
 			return;
 		}
 	}
-	i_die("impossible case occured in i_draw, *BOOM*\n");
+	i_die("impossible case ocolcured in i_draw, *BOOM*\n");
 }
 
 int /* initialise data structure and read in file */
@@ -567,12 +591,7 @@ i_loadfile(char *fname){
 	ssize_t n;
 
 	if( ! fstart ){
-		/* initialise data structure */
-		if( ! (fstart = (Line*) malloc(sizeof(Line))) ) i_die("failed to malloc in loadfile");
-		if( ! (fstart->c = (char*) calloc(LINESIZE, sizeof(char))) ) i_die("failed to malloc in loadfile");
-		fstart->mul = 0;
-		fstart->len = 0;
-		fstart->c[0] = '\0';
+		fstart = i_newline(1);
 		fend = fstart;
 		cur.l = fstart;
 		cur.o = 0;
@@ -583,6 +602,8 @@ i_loadfile(char *fname){
 	else{
 		if( (fd=open(fname, O_RDONLY)) == -1 )
 			; /* FIXME new file, inform user */
+		if( curfile )
+			free( curfile );
 		curfile = strcpy(malloc(strlen(fname) + 1), fname);
 	}
 
@@ -614,11 +635,17 @@ i_savefile(char *fname){
 	if( (fd=open(fname, O_WRONLY|O_TRUNC|O_CREAT, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)) == -1 )
 		i_die("failed to open file for writing in savefile");
 
-	for( l=fstart; l; l=l->next )
-		if( write(fd, l->c, l->len) == -1 || write(fd, "\n", 1) == -1){
+	for( l=fstart; l; l=l->next ){
+		if( write(fd, l->c, l->len) == -1 ){
 			error = true;
 			break;
 		}
+		if( l != fend )
+			if(write(fd, "\n", 1) == -1){
+				error = true;
+				break;
+			}
+	}
 
 	modified = false;
 	return error;
@@ -659,7 +686,3 @@ main(int argc, char **argv){
 	}
 	i_tidyup();
 }
-
-
-
-

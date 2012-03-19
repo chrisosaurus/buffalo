@@ -2,8 +2,8 @@
 Quit! was    run   undo   findB  balgn SOF    uscr  EOF         
 quit  write  read         findF  talgn SOL    uchr  EOL         
 ----- ------ ----- ------ -----  ----- ------ ----- ------ -----
-      cut    clsel sels   g&smk  \nbf  lwrd   dscr  rwrd        
-      copy   paste sele   smk    \naf  lchr   dchar rchar       
+      cut    clsel sele   g&smk  \nbf  lwrd   dscr  rwrd        
+      copy   paste sels   smk    \naf  lchr   dchar rchar       
 ----- ------ ----- ------ -----  ----- ------ ----- ------ -----
 
 in a key such as
