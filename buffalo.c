@@ -453,47 +453,52 @@ i_tidyup(void){
 
 void /* draw all dirty lines on screen or draw all lines if sdirty */
 i_drawscr(bool sdirty, int crow, int ccol){
-	int (*colold)(void) = b_default;
-	int (*colcur)(void) = b_default;
 	Line *l;
 	int n=1, c=0, i=0; /* n is line number, c is the char counter, i is used within the printing loop */
+	bool selected = false;
 
 	c_line0();
 	for( n=1, l=sstart; l && n<height; l=l->next, ++n ){
-		if( l == cur.l ){
-			if( colcur == b_default ){
-				colold = colcur;
-				colcur = b_blue;
-			}
-		} else if( colcur == b_blue ){
-			colcur = colold;
-		}
+		if( selected ){
+			b_green();
+			l->dirty = true;
+		} else if( l == cur.l ){
+			b_blue();
+			l->dirty = true;
+		} else
+			b_default();
 
 		if( l->dirty || sdirty ){
+			l->dirty = false;
 			c_clearline();
-			colcur();
 			for( c=0; c<l->len && c<width; ++c ){
-				if( l == sels.l &&  c == sels.o ){
-					colold = colcur;
-					colcur = b_green;
-					colcur();
-				} else if ( (l == sele.l && c == sele.o) ){
-					colcur = colold;
-					colcur();
+				if( l == sels.l && c == sels.o ){
+					selected = true;
+					b_green();
+					l->dirty = true;
+				} else if( (l == sele.l && c == sele.o) || (! sele.l) ){
+					selected = false;
+					if( cur.l == l )
+						b_blue();
+					else
+						b_default();
 				}
-				
+
 				if( l->c[c] == '\t' )
-					for( i=0; i<TABSTOP; ++i, ++c )
+					for( i=0; i<TABSTOP; ++i )
 						fputc(' ', stdout);
 				else
 					fputc(l->c[c], stdout);
 			}
-			for( ; c<width; ++c )
-				fputc(' ', stdout);
-			if( colcur == b_default )
-				l->dirty = false;
-			else
-				l->dirty = true;
+			if( l == cur.l ){
+				b_blue();
+				for( ; c<width; ++c )
+					fputc(' ', stdout);
+				if( selected )
+					b_green();
+				else
+					b_default();
+			}
 		}
 		c_nline();
 	}
