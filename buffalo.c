@@ -464,15 +464,14 @@ i_drawscr(bool sdirty, int crow, int ccol){
 			if( colcur == b_default ){
 				colold = colcur;
 				colcur = b_blue;
-				colcur();
 			}
 		} else if( colcur == b_blue ){
 			colcur = colold;
-			colcur();
 		}
 
 		if( l->dirty || sdirty ){
 			c_clearline();
+			colcur();
 			for( c=0; c<l->len && c<width; ++c ){
 				if( l == sels.l &&  c == sels.o ){
 					colold = colcur;
@@ -484,11 +483,13 @@ i_drawscr(bool sdirty, int crow, int ccol){
 				}
 				
 				if( l->c[c] == '\t' )
-					for( i=0; i<TABSTOP; ++i )
+					for( i=0; i<TABSTOP; ++i, ++c )
 						fputc(' ', stdout);
 				else
 					fputc(l->c[c], stdout);
 			}
+			for( ; c<width; ++c )
+				fputc(' ', stdout);
 			if( colcur == b_default )
 				l->dirty = false;
 			else
@@ -496,6 +497,7 @@ i_drawscr(bool sdirty, int crow, int ccol){
 		}
 		c_nline();
 	}
+	b_default();
 	for( ; n<height; ++n ){
 		c_clearline();
 		c_nline();
