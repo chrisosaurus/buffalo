@@ -30,4 +30,4 @@ sels/sele = set selection start/end to cur
 clsel = clear selection
 
 need to consider:
-goto line number, how do we get line number? selection, possibly use the y
+goto line number, how do we get line number? selection, possibly use the binding (maybe r under undo?)

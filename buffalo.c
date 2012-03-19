@@ -53,6 +53,7 @@ static char *curfile; /* current file name */
 static int height=0, width=0; /* height last time we drew */
 static Filepos mark = {0,0}; /* mark in file */
 static bool modified=false; /* has the file been modified since last save or load */
+static Line *buffer; /* current 'copied' buffer */
 
 /** Internal functions **/
 static Filepos i_insert(Filepos pos, const char *buf); /* insert buf at pos and return new filepos after the inserted char */
@@ -89,7 +90,11 @@ static void f_write(const Arg *arg); /* ignore arg, save file to curfile */
 static void f_suspend(const Arg *arg); /* suspend to terminal */
 static void f_mark(const Arg *arg); /* perform mark operation based on arg->i, 0 is set, 1 is set & goto old */
 static void f_sel(const Arg *arg); /* perform selecton operation based on arg->i, 0 is set end, 1 is set start, 2 is clear both */
-static void f_newl(const Arg *arg); /* insert new line either before (arg->i == 0), or after (arg->i == 1) current line */
+static void f_newl(const Arg *arg); /* insert new line either before (arg->i == 0), or after (arg->i == 1) current line and set cur to first char of newline*/
+static void f_cut(const Arg *arg); /* remove selection and copy into buffer */
+static void f_copy(const Arg *arg); /* copy selection into buffer */
+static void f_paste(const Arg *arg); /* paste contents of buffer at cursor */
+static void f_align(const Arg *arg); /* align cursor line to either top (arg->i = 0) or bottom (arg->i = 1) of screen */
 
 #include "config.h"
 
@@ -162,6 +167,8 @@ f_sel(const Arg *arg){
 
 void /* insert newline before (arg->i == 0) or after (arg->i == 1) */
 f_newl(const Arg *arg){
+	cur.l->dirty = true;
+	height = 0; /* sdirty */
 	Line *l = i_newline(1);
 	modified = true;
 	if( arg->i ){
@@ -184,6 +191,31 @@ f_newl(const Arg *arg){
 		cur.l->prev = l;
 		cur.l = l;
 		cur.o = 0;
+	}
+}
+
+void /* copy contents of selection into buffer */
+f_copy(const Arg *arg){
+	/* FIXME */
+}
+
+void /* cut contents of selection into buffer */
+f_cut(const Arg *arg){
+	/* FIXME */
+}
+
+void /* paste contents of buffer at cursor */
+f_paste(const Arg *arg){
+	/* FIXME */
+}
+
+void /* align cursor line to either top (arg->i = 0) or bottom (arg->i = 1) of screen */
+f_align(const Arg *arg){
+	if( arg->i ){
+		/* FIXME bottom */
+	} else {
+		sstart = cur.l;
+		height = 0; /* sdirty */
 	}
 }
 
@@ -598,6 +630,7 @@ i_loadfile(char *fname){
 	ssize_t n;
 
 	if( ! fstart ){
+		buffer = i_newline(1);
 		fstart = i_newline(1);
 		fend = fstart;
 		cur.l = fstart;
