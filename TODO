@@ -3,11 +3,12 @@ codes.* will eventually become its own library, maybe stw (simple termcode wrapp
 
 
 buffalo TODO:
-paste / cut / copy
+cut / copy
 save as
 open(run time specified file, possibly with another already open)
 quit data cleanup
 
+goto matching bracket (simple 'stack' counter, will fail for non literals but meh)
 goto line
 search
 synta highlighting

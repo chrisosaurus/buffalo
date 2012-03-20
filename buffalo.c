@@ -141,18 +141,31 @@ f_mark(const Arg *arg){
 
 void /* selection operations, determine which by arg->i: 0 is set sele, 1 is set sels, 2 is clear */
 f_sel(const Arg *arg){
+	Line *l=0;
 	switch( arg->i ){
 		case 0:
 			if( sele.l )
 				sele.l->dirty = true;
 			sele = cur;
 			sele.l->dirty = true;
+			/* sels < sele, otherwise unset sele */
+			for( l=sels.l; l!=sele.l; l=l->next )
+				if( l == fend ){
+					sele = (Filepos){0, 0};
+					break;
+				}
 			break;
 		case 1:
 			if( sels.l )
 				sels.l->dirty = true;
 			sels = cur;
 			sels.l->dirty = true;
+			/* sels < sele, otherwise unset sele */
+			for( l=sels.l; l!=sele.l; l=l->next )
+				if( l == fend ){
+					sele = (Filepos){0, 0};
+					break;
+				}
 			break;
 		case 2:
 			if( sels.l )
@@ -206,7 +219,7 @@ f_cut(const Arg *arg){
 
 void /* paste contents of buffer at cursor */
 f_paste(const Arg *arg){
-	/* FIXME */
+	cur = i_insert(cur, buffer->c);
 }
 
 void /* align cursor line to either top (arg->i = 0) or bottom (arg->i = 1) of screen */
@@ -503,7 +516,7 @@ i_drawscr(bool sdirty, int crow, int ccol){
 		if( l->dirty || sdirty ){
 			l->dirty = false;
 			c_clearline();
-			for( c=0; c<l->len && c<(width-1); ++c ){
+			for( c=0; c<=l->len && c<(width-1); ++c ){
 				if( l == sels.l && c == sels.o ){
 					selected = true;
 					b_green();
@@ -516,10 +529,11 @@ i_drawscr(bool sdirty, int crow, int ccol){
 						b_default();
 				}
 
+
 				if( l->c[c] == '\t' )
 					for( i=0; i<TABSTOP; ++i )
 						fputc(' ', stdout);
-				else
+				else if( l->c[c] != '\0' )
 					fputc(l->c[c], stdout);
 			}
 			if( l == cur.l ){
