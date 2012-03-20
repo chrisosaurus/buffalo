@@ -135,19 +135,21 @@ f_mark(const Arg *arg){
 		if( mark.l )
 			cur = mark;
 		mark = nmark;
+		mark.l->dirty = true;
 	} else
 		mark = cur;
+	cur.l->dirty = true;
 }
 
 void /* selection operations, determine which by arg->i: 0 is set sele, 1 is set sels, 2 is clear */
 f_sel(const Arg *arg){
 	Line *l=0;
+	height = 0;
 	switch( arg->i ){
 		case 0:
-			if( sele.l )
-				sele.l->dirty = true;
+			if( ! sels.l )
+				return;
 			sele = cur;
-			sele.l->dirty = true;
 			/* sels < sele, otherwise unset sele */
 			if( sels.l == sele.l && sels.o >= sele.o )
 				sele = (Filepos){0,0};
@@ -159,11 +161,10 @@ f_sel(const Arg *arg){
 					}
 			break;
 		case 1:
-			if( sels.l )
-				sels.l->dirty = true;
 			sels = cur;
-			sels.l->dirty = true;
 			/* sels < sele, otherwise unset sele */
+			if( ! sele.l )
+				return;
 			if( sels.l == sele.l && sels.o >= sele.o )
 				sele = (Filepos){0,0};
 			else
@@ -174,10 +175,6 @@ f_sel(const Arg *arg){
 					}
 			break;
 		case 2:
-			if( sels.l )
-				sels.l->dirty = true;
-			if( sele.l )
-				sele.l->dirty = true;
 			sele = (Filepos){0, 0};
 			sels = (Filepos){0, 0};
 			break;
@@ -220,16 +217,19 @@ f_copy(const Arg *arg){
 	if( ! sels.l || ! sele.l )
 		return;
 	for( l=sels.l, i=sels.o; l && (sele.o != i || sele.l != l) ; ++i, ++c ){
-		if( sele.l == l )
-			fputs("l and l\n", stderr);
-		if( sele.o == i )
-			fputs("o and i\n", stderr);
-		fputs("g\n", stderr);
-		if( i	> l->len )
+		/* copy each char into buffer->c[c] if there is room (c < buffer->mul * LINESIZE ) */
+		if( (c+1) >= (buffer->mul * LINESIZE) )
+			if( ! (buffer->c = realloc(buffer->c, LINESIZE*(++buffer->mul)) ) )
+				i_die("realloc failed in f_copy\n");
+		if( i >= l->len ){
+			buffer->c[c] = '\n';
+			i = -1;
 			l=l->next;
-		/* FIXME */
+		} else
+			buffer->c[c] = l->c[i];
 	}
-	fprintf(stderr, "%d\n", c);
+	buffer->len = c-1;
+	buffer->c[c] = '\0';
 }
 
 void /* cut contents of selection into buffer */
@@ -239,7 +239,8 @@ f_cut(const Arg *arg){
 
 void /* paste contents of buffer at cursor */
 f_paste(const Arg *arg){
-	cur = i_insert(cur, buffer->c);
+	if( buffer->len )
+		cur = i_insert(cur, buffer->c);
 }
 
 void /* align cursor line to either top (arg->i = 0) or bottom (arg->i = 1) of screen */

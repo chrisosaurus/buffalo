@@ -3,7 +3,7 @@ codes.* will eventually become its own library, maybe stw (simple termcode wrapp
 
 
 buffalo TODO:
-cut / copy
+cut / del
 save as
 open(run time specified file, possibly with another already open)
 quit data cleanup
