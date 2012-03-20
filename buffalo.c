@@ -149,11 +149,14 @@ f_sel(const Arg *arg){
 			sele = cur;
 			sele.l->dirty = true;
 			/* sels < sele, otherwise unset sele */
-			for( l=sels.l; l!=sele.l; l=l->next )
-				if( l == fend ){
-					sele = (Filepos){0, 0};
-					break;
-				}
+			if( sels.l == sele.l && sels.o >= sele.o )
+				sele = (Filepos){0,0};
+			else
+				for( l=sels.l; l!=sele.l; l=l->next )
+					if( l == fend ){
+						sele = (Filepos){0, 0};
+						break;
+					}
 			break;
 		case 1:
 			if( sels.l )
@@ -161,11 +164,14 @@ f_sel(const Arg *arg){
 			sels = cur;
 			sels.l->dirty = true;
 			/* sels < sele, otherwise unset sele */
-			for( l=sels.l; l!=sele.l; l=l->next )
-				if( l == fend ){
-					sele = (Filepos){0, 0};
-					break;
-				}
+			if( sels.l == sele.l && sels.o >= sele.o )
+				sele = (Filepos){0,0};
+			else
+				for( l=sels.l; l!=sele.l; l=l->next )
+					if( l == fend ){
+						sele = (Filepos){0, 0};
+						break;
+					}
 			break;
 		case 2:
 			if( sels.l )
@@ -209,7 +215,21 @@ f_newl(const Arg *arg){
 
 void /* copy contents of selection into buffer */
 f_copy(const Arg *arg){
-	/* FIXME */
+	Line *l=0;
+	int i=0, c=0; /* i is position in a line, c is count of chars copied */
+	if( ! sels.l || ! sele.l )
+		return;
+	for( l=sels.l, i=sels.o; l && (sele.o != i || sele.l != l) ; ++i, ++c ){
+		if( sele.l == l )
+			fputs("l and l\n", stderr);
+		if( sele.o == i )
+			fputs("o and i\n", stderr);
+		fputs("g\n", stderr);
+		if( i	> l->len )
+			l=l->next;
+		/* FIXME */
+	}
+	fprintf(stderr, "%d\n", c);
 }
 
 void /* cut contents of selection into buffer */
