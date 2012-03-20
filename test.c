@@ -44,12 +44,20 @@ int main(){
 	
 	int h = t_getheight();
 	int i;
-	for( i=1; i<h-3; ++i ){
-		fputs("\n======", stdout);
-		if( i%2 ) b_blue();
-		else b_green();
-	}
-	b_default();
+	c_goto(0,0);
+	fputs("0", stdout);
+	c_goto(1,1);
+	fputs("1", stdout);
+	c_goto(2,2);
+	fputs("2", stdout);
+	c_goto(h-3, h-3);
+	fputs("-3", stdout);
+	c_goto(h-2, h-2);
+	fputs("-2", stdout);
+	c_goto(h-1, h-1);
+	fputs("-1", stdout);
+	c_goto(h, h);
+	fputs("-0", stdout);
 	fflush(stdout);
 
 	// main loop
