@@ -36,7 +36,7 @@ dist: clean
 	@echo creating dist tarball
 	@mkdir -p buffalo-${VERSION}
 	@cp -R LICENSE Makefile config.mk config.def.h \
-		README TODO buffalo.1 ${SRC} buffalo-${VERSION}
+		README TODO buffalo.1 codes.h ${SRC} buffalo-${VERSION}
 	@tar -cf buffalo-${VERSION}.tar buffalo-${VERSION}
 	@gzip buffalo-${VERSION}.tar
 	@rm -rf buffalo-${VERSION}

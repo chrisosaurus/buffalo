@@ -21,7 +21,7 @@ Afterwards you should be able to install buffalo with (root may be required):
 Running buffalo
 ---------------
 
-    buffalo
+    buffalo file
 
 
 Name
