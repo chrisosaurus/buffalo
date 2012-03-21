@@ -1,8 +1,8 @@
 ----- ------ ----- ------ -----  ----- ------ ----- ------ -----
 Quit! was    run   undo   findB  balgn SOF    uscr  EOF         
-quit  write  read         findF  talgn SOL    uchr  EOL         
+quit  write  read  clsel  findF  talgn SOL    uchr  EOL         
 ----- ------ ----- ------ -----  ----- ------ ----- ------ -----
-      cut    clsel sele   g&smk  \nbf  lwrd   dscr  rwrd        
+      cut    del   sele   g&smk  \nbf  lwrd   dscr  rwrd        
       copy   paste sels   smk    \naf  lchr   dchar rchar       
 ----- ------ ----- ------ -----  ----- ------ ----- ------ -----
 

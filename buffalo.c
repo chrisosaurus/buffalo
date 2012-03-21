@@ -94,6 +94,7 @@ static void f_newl(const Arg *arg); /* insert new line either before (arg->i == 
 static void f_cut(const Arg *arg); /* remove selection and copy into buffer */
 static void f_copy(const Arg *arg); /* copy selection into buffer */
 static void f_paste(const Arg *arg); /* paste contents of buffer at cursor */
+static void f_del(const Arg *arg); /* delete selection, ignore arg */
 static void f_align(const Arg *arg); /* align cursor line to either top (arg->i = 0) or bottom (arg->i = 1) of screen */
 
 #include "config.h"
@@ -234,13 +235,44 @@ f_copy(const Arg *arg){
 
 void /* cut contents of selection into buffer */
 f_cut(const Arg *arg){
-	/* FIXME */
+	f_copy(arg);
+	f_del(arg);
 }
 
 void /* paste contents of buffer at cursor */
 f_paste(const Arg *arg){
 	if( buffer->len )
 		cur = i_insert(cur, buffer->c);
+}
+
+void /* delete selection, ignore arg */
+f_del(const Arg *arg){
+	Line *l=0, *lb=0; /* line and line backup */
+	if( ! sels.l || ! sele.l )
+		return;
+	if( sels.l != sele.l )
+		for( l=sels.l->next; l && sele.l != l; ){
+			if( l->prev )
+				l->prev->next = l->next;
+			if( l->next )
+				l->next->prev = l->prev;
+			free(l->c);
+			lb = l->next;
+			free(l);
+			l=lb;
+		}
+	sels.l->len = sels.o;
+	i_insert( sels, &(sele.l->c[sele.o]) );
+	if( sels.l != sele.l ){
+		if( l->prev )
+			l->prev->next = l->next;
+		if( l->next )
+			l->next->prev = l->prev;
+		free(l->c);
+		free(l);
+	}
+	cur = sels;
+	f_sel(&(Arg){.i=2}); /* clear selection */
 }
 
 void /* align cursor line to either top (arg->i = 0) or bottom (arg->i = 1) of screen */

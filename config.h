@@ -28,11 +28,12 @@ static const Key keys[] = {
 
 	{ ALT('F'), f_sel, { .i=0 } },
 	{ ALT('f'), f_sel, { .i=1 } },
-	{ ALT('D'), f_sel, { .i=2 } },
+	{ ALT('r'), f_sel, { .i=2 } },
 
 	{ ALT('d'), f_paste, {.c=0 } },
 	{ ALT('s'), f_copy, { .c=0 } },
 	{ ALT('S'), f_cut, { .c=0 } },
+	{ ALT('D'), f_del, { .c=0 } },
 
 	{ ALT('H'), f_newl, { .i=0 } },
 	{ ALT('h'), f_newl, { .i=1 } },
