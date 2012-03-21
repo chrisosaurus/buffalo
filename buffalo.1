@@ -57,9 +57,6 @@ Move cursor to end of file.
 Set mark to current position.
 .TP
 .BR Alt\-G
-Set cursor to current mark.
-.TP
-.BR Alt\-t
 Set mark to current position, then jump to old mark ('toggle').
 
 
@@ -72,4 +69,39 @@ Quit regardless of unsaved changes.
 .TP
 .BR Alt\-w
 Write file to disk.
+
+.SS Selection Operations
+.BR Alt\-f
+Start selection.
+.TP
+.BR Alt\-F
+End selection.
+.TP
+.BR Alt\-r
+Clear selection.
+.TP
+.BR Alt\-s
+Copy selection into buffer.
+.TP
+.BR Alt\-S
+Cut selection into buffer.
+.TP
+.BR Alt\-d
+Paste buffer at cursor.
+.TP
+.BR Alt\-D
+Delete selection.
+
+.SS Misc operations
+.BR Alt\-y
+Move current line to top of screen.
+.TP
+.BR Alt\-Y
+Goto line number specifed in buffer.
+.TP
+.BR Alt\-h
+Insert newline below current and place cursor on it.
+.TP
+.BR Alt\-H
+Insert newline above current and place cursor on it.
 .TP
