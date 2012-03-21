@@ -1,5 +1,5 @@
 ----- ------ ----- ------ -----  ----- ------ ----- ------ -----
-Quit! was    run   undo   findB  balgn SOF    uscr  EOF         
+Quit! was    run   undo   findB  g2lin SOF    uscr  EOF         
 quit  write  read  clsel  findF  talgn SOL    uchr  EOL         
 ----- ------ ----- ------ -----  ----- ------ ----- ------ -----
       cut    del   sele   g&smk  \nbf  lwrd   dscr  rwrd        

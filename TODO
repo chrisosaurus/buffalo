@@ -8,7 +8,6 @@ open(run time specified file, possibly with another already open)
 quit data cleanup
 
 goto matching bracket (simple 'stack' counter, will fail for non literals but meh)
-goto line
 search
 synta highlighting
 undo

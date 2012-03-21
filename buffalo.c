@@ -95,7 +95,8 @@ static void f_cut(const Arg *arg); /* remove selection and copy into buffer */
 static void f_copy(const Arg *arg); /* copy selection into buffer */
 static void f_paste(const Arg *arg); /* paste contents of buffer at cursor */
 static void f_del(const Arg *arg); /* delete selection, ignore arg */
-static void f_align(const Arg *arg); /* align cursor line to either top (arg->i = 0) or bottom (arg->i = 1) of screen */
+static void f_align(const Arg *arg); /* align cursor line to top of screen */
+static void f_goto(const Arg *arg); /* goto line specified in buffer, ignore arg */
 
 #include "config.h"
 
@@ -250,6 +251,7 @@ f_del(const Arg *arg){
 	Line *l=0, *lb=0, *le=0; /* line, line backup and line end*/
 	if( ! sels.l || ! sele.l )
 		return;
+	--sels.o;
 	sels.l->len = sels.o;
 	i_insert( sels, &(sele.l->c[sele.o]) );
 	cur = sels;
@@ -268,14 +270,23 @@ f_del(const Arg *arg){
 	f_sel(&(Arg){.i=2}); /* clear selection */
 }
 
-void /* align cursor line to either top (arg->i = 0) or bottom (arg->i = 1) of screen */
+void /* align cursor line to top of screen */
 f_align(const Arg *arg){
-	if( arg->i ){
-		/* FIXME bottom */
-	} else {
-		sstart = cur.l;
-		height = 0; /* sdirty */
-	}
+	sstart = cur.l;
+	height = 0; /* sdirty */
+}
+
+void /* goto line specifed in buffer, ignore arg */
+f_goto(const Arg *arg){
+	int ln = atoi(buffer->c);
+	int i=0;
+	Line *l=0;
+
+	if( cur.l )
+		cur.l->dirty = true;
+	for( i=0, l=fstart; l->next && i < ln; ++i, l=l->next ) ;
+	cur.l = l;
+	cur.o = 0;
 }
 
 /* Movement functions definitions */

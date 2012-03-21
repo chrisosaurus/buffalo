@@ -38,7 +38,7 @@ static const Key keys[] = {
 	{ ALT('H'), f_newl, { .i=0 } },
 	{ ALT('h'), f_newl, { .i=1 } },
 	{ ALT('y'), f_align, { .i=0 } },
-	{ ALT('Y'), f_align, { .i=1 } },
+	{ ALT('Y'), f_goto, { .c=0 } },
 
 	{ CTRL('Z'), f_suspend, { .c=0 } },
 
