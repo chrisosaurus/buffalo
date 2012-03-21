@@ -247,11 +247,15 @@ f_paste(const Arg *arg){
 
 void /* delete selection, ignore arg */
 f_del(const Arg *arg){
-	Line *l=0, *lb=0; /* line and line backup */
+	Line *l=0, *lb=0, *le=0; /* line, line backup and line end*/
 	if( ! sels.l || ! sele.l )
 		return;
+	sels.l->len = sels.o;
+	i_insert( sels, &(sele.l->c[sele.o]) );
+	cur = sels;
+	/* delete lines other than sels.l */
 	if( sels.l != sele.l )
-		for( l=sels.l->next; l && sele.l != l; ){
+		for( l=sels.l->next, le = sele.l->next; l && l != le ; ){
 			if( l->prev )
 				l->prev->next = l->next;
 			if( l->next )
@@ -261,17 +265,6 @@ f_del(const Arg *arg){
 			free(l);
 			l=lb;
 		}
-	sels.l->len = sels.o;
-	i_insert( sels, &(sele.l->c[sele.o]) );
-	if( sels.l != sele.l ){
-		if( l->prev )
-			l->prev->next = l->next;
-		if( l->next )
-			l->next->prev = l->prev;
-		free(l->c);
-		free(l);
-	}
-	cur = sels;
 	f_sel(&(Arg){.i=2}); /* clear selection */
 }
 
