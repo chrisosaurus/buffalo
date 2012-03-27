@@ -279,12 +279,12 @@ f_align(const Arg *arg){
 void /* goto line specifed in buffer, ignore arg */
 f_goto(const Arg *arg){
 	int ln = atoi(buffer->c);
-	int i=0;
+	int i=1;
 	Line *l=0;
 
 	if( cur.l )
 		cur.l->dirty = true;
-	for( i=0, l=fstart; l->next && i < ln; ++i, l=l->next ) ;
+	for( i=1, l=fstart; l->next && i < ln; ++i, l=l->next ) ;
 	cur.l = l;
 	cur.o = 0;
 }

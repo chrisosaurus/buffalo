@@ -31,3 +31,6 @@ clsel = clear selection
 
 need to consider:
 goto line number, how do we get line number? selection, possibly use the binding (maybe r under undo?)
+search from buffer / copy and search / cut and search
+soft selection (typing is into a selection), is this a second selection or does it cancel the first?
+delete (D) is too close to cut (S)
