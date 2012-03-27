@@ -149,10 +149,11 @@ f_sel(const Arg *arg){
 	height = 0;
 	switch( arg->i ){
 		case 0:
+			sele = cur;
+			/* sels < sele, otherwise unset sels */
 			if( ! sels.l )
 				return;
-			sele = cur;
-			/* sels < sele, otherwise unset sele */
+			/* sels < sele, otherwise unset sele FIXME or should I unset sels as sele is the most recently placed? */
 			if( sels.l == sele.l && sels.o >= sele.o )
 				sele = (Filepos){0,0};
 			else
@@ -220,7 +221,7 @@ f_copy(const Arg *arg){
 		return;
 	for( l=sels.l, i=sels.o; l && (sele.o != i || sele.l != l) ; ++i, ++c ){
 		/* copy each char into buffer->c[c] if there is room (c < buffer->mul * LINESIZE ) */
-		if( (c+1) >= (buffer->mul * LINESIZE) )
+		if( (c+1) > (buffer->mul * LINESIZE) )
 			if( ! (buffer->c = realloc(buffer->c, LINESIZE*(++buffer->mul)) ) )
 				i_die("realloc failed in f_copy\n");
 		if( i >= l->len ){
@@ -230,7 +231,7 @@ f_copy(const Arg *arg){
 		} else
 			buffer->c[c] = l->c[i];
 	}
-	buffer->len = c-1;
+	buffer->len = c;
 	buffer->c[c] = '\0';
 }
 
@@ -496,12 +497,16 @@ i_backspace(Filepos pos){
 		return pos;
 
 	if( pos.o <= 0 ){
+		/* need to move everythin in this line onto the end of the previos */
 		if( ! pos.l->prev ) return pos;
 		Line *l = pos.l->prev;
 		int nl = pos.l->len + l->len;
-		l->mul = nl / LINESIZE +1;
+		int nmul = nl / LINESIZE +1;
 
-		if( ! (l->c = realloc(l->c, l->mul*LINESIZE)) ) i_die("failed to realloc in i_backspace\n");
+		if( nmul > l->mul ){
+			l->mul = nmul;
+			if( ! (l->c = realloc(l->c, l->mul*LINESIZE)) ) i_die("failed to realloc in i_backspace\n");
+		}
 		if( ! (memcpy( &(l->c[l->len]), pos.l->c, pos.l->len+1 )) ) i_die("failed to memcpy in i_backspace\n");
 
 		pos.o = l->len;
@@ -514,8 +519,9 @@ i_backspace(Filepos pos){
 		free(pos.l);
 		pos.l = l;
 	} else {
+		/* move every character after me one down */
 		if( ! memmove( &(pos.l->c[pos.o-1]), &(pos.l->c[pos.o]), (pos.l->len - pos.o)+1 ) )
-			i_die("failed to memmove in i_backspace\n");	/* FIXME off by one in length? */
+			i_die("failed to memmove in i_backspace\n");
 		--pos.o;
 		--pos.l->len;
 	}
