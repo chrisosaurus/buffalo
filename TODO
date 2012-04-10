@@ -3,10 +3,12 @@ codes.* will eventually become its own library, maybe stw (simple termcode wrapp
 
 
 buffalo TODO:
-fix search backwards so it will search cur.l[ 0 : cur.o ]
-
 save as
 open(run time specified file, possibly with another already open)
 goto matching bracket (simple 'stack' counter, will fail for non literals but meh)
 synta highlighting
 undo
+
+bugs:
+fix search backwards so it will search cur.l[ 0 : cur.o ]
+highlighting when selection start is before screen and selection end is on screen, doesnt highlight but should

@@ -40,6 +40,9 @@ static const Key keys[] = {
 	{ ALT('y'), f_align, { .i=0 } },
 	{ ALT('Y'), f_goto, { .c=0 } },
 
+	{ ALT('T'), f_searchb, { .c=0 } },
+	{ ALT('t'), f_searchf, { .c=0 } },
+
 	{ CTRL('Z'), f_suspend, { .c=0 } },
 
 	/*{ ALT('h'), f_cur, { .m_func = m_SOMETHING } },
