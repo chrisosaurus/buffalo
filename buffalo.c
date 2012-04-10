@@ -304,6 +304,7 @@ f_goto(const Arg *arg){
 	cur.o = 0;
 }
 
+
 void /* set mark and search forward using regex in buffer */
 f_searchf(const Arg *arg){
 	regex_t re;
@@ -325,15 +326,15 @@ f_searchf(const Arg *arg){
 		status= regexec( &re, &(cur.l->c[cur.o+1]), 1, matches, 0 );
 
 	if( status == REG_NOMATCH )
-		for( l=cur.l->next; l && status==REG_NOMATCH && l!=cur.l; ){
+		for( l=(cur.l->next?cur.l->next:fstart); l && status==REG_NOMATCH && l!=cur.l; ){
 			status = regexec( &re, l->c, 1, matches, 0);
 			if( ! status )
 				break;
 
-			if( ! l->next )
-				l = fstart;
-			else
+			if( l->next )
 				l = l->next;
+			else
+				l = fstart;
 		}
 
 	regfree(&re);
@@ -348,8 +349,46 @@ f_searchf(const Arg *arg){
 
 void /* set mark and search backwards using regex in buffer */
 f_searchb(const Arg *arg){
+	regex_t re;
+	regmatch_t matches[1];
+	Line *l=cur.l;
+	int status=REG_NOMATCH;
+
+	if( ! buffer->len )
+		return;
+
 	f_mark( &(Arg){.c=0} );
-	/* FIXME todo */
+
+	if( regcomp( &re, buffer->c, REG_EXTENDED ) )
+		i_die("regcomp failed in f_searchf");
+
+	/* FIXME need to search line up to cursor, quite iffy
+	if( cur.o )
+		status= regexec( &re, &(cur.l->c[cur.o+1]), 1, matches, REG_NOTBOL );
+	else
+		status= regexec( &re, &(cur.l->c[cur.o+1]), 1, matches, 0 );
+		*/
+
+	if( status == REG_NOMATCH )
+		for( l=(cur.l->prev?cur.l->prev:fend); l && status==REG_NOMATCH && l!=cur.l; ){
+			status = regexec( &re, l->c, 1, matches, 0);
+			if( ! status )
+				break;
+
+			if( l->prev )
+				l = l->prev;
+			else
+				l = fend;
+		}
+
+	regfree(&re);
+
+	if( ! status ){
+		/* match, address is matches[0].rm_so to matches[0].rm_eo */
+		sels = (Filepos){l, matches[0].rm_so};
+		sele = (Filepos){l, matches[0].rm_eo};
+		cur = sels;
+	}
 }
 
 /* Movement functions definitions */
