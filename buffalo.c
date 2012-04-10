@@ -6,6 +6,7 @@
 #include <fcntl.h> /* open, close */
 #include <signal.h> /* signal, raise, SIGSTOP, SIGCONT */
 #include <sys/stat.h> /* S_* */
+#include <regex.h> /* regcomp, regexec, regfree */
 #include "codes.h" /* because ncurses sucks more */
 
 #define LINESIZE 80
@@ -97,6 +98,8 @@ static void f_paste(const Arg *arg); /* paste contents of buffer at cursor */
 static void f_del(const Arg *arg); /* delete selection, ignore arg */
 static void f_align(const Arg *arg); /* align cursor line to top of screen */
 static void f_goto(const Arg *arg); /* goto line specified in buffer, ignore arg */
+static void f_searchf(const Arg *arg); /* search forward using regex in buffer */
+static void f_searchb(const Arg *arg); /* search backwards using regex in buffer */
 
 #include "config.h"
 
@@ -252,32 +255,32 @@ f_del(const Arg *arg){
 	Line *l=0, *lb=0; /* line and line backup */
 	if( ! sels.l || ! sele.l )
 		return;
-    if( sels.l == sele.l) {
-        memmove( &(sels.l->c[sels.o]), &(sele.l->c[sele.o]), sele.l->len - sele.o );
-        sels.l->len = sels.o + (sele.l->len - sele.o);
-        sels.l->c[sels.l->len] = '\0';
-    } else {
-        for( l=sels.l->next; l && l != sele.l ; ){
-            if( l->prev )
-                l->prev->next = l->next;
-            if( l->next )
-                l->next->prev = l->prev;
-            free(l->c);
-            lb = l->next;
-            free(l);
-            l = lb;
-        }
-	    i_insert( sels, &(sele.l->c[sele.o]) );
-        if( sele.l->prev )
-            sele.l->prev->next = sele.l->next;
-        if( sele.l->next )
-            sele.l->next->prev = sele.l->prev;
-        sels.l->len = sels.o + (sele.l->len - sele.o);
-        sels.l->c[sels.l->len] = '\0';
-        free(sele.l->c);
-        free(sele.l);
-    }
-    /* tidy up */
+	if( sels.l == sele.l) {
+		memmove( &(sels.l->c[sels.o]), &(sele.l->c[sele.o]), sele.l->len - sele.o );
+		sels.l->len = sels.o + (sele.l->len - sele.o);
+		sels.l->c[sels.l->len] = '\0';
+	} else {
+		for( l=sels.l->next; l && l != sele.l ; ){
+			if( l->prev )
+				l->prev->next = l->next;
+			if( l->next )
+				l->next->prev = l->prev;
+			free(l->c);
+			lb = l->next;
+			free(l);
+			l = lb;
+		}
+		i_insert( sels, &(sele.l->c[sele.o]) );
+		if( sele.l->prev )
+			sele.l->prev->next = sele.l->next;
+		if( sele.l->next )
+			sele.l->next->prev = sele.l->prev;
+		sels.l->len = sels.o + (sele.l->len - sele.o);
+		sels.l->c[sels.l->len] = '\0';
+		free(sele.l->c);
+		free(sele.l);
+	}
+	/* tidy up */
 	cur = sels;
 	f_sel(&(Arg){.i=2}); /* clear selection */
 }
@@ -299,6 +302,51 @@ f_goto(const Arg *arg){
 	for( i=1, l=fstart; l->next && i < ln; ++i, l=l->next ) ;
 	cur.l = l;
 	cur.o = 0;
+}
+
+void /* set mark and search forward using regex in buffer */
+f_searchf(const Arg *arg){
+	regex_t re;
+	regmatch_t matches[1];
+	Line *l=cur.l;
+	int status=REG_NOMATCH;
+
+	f_mark( &(Arg){.c=0} );
+
+	if( regcomp( &re, buffer->c, REG_EXTENDED ) )
+		i_die("regcomp failed in f_searchf");
+
+	if( cur.o ) /* if not start of line */
+		status= regexec( &re, &(cur.l->c[cur.o+1]), 1, matches, REG_NOTBOL );
+	else
+		status= regexec( &re, &(cur.l->c[cur.o+1]), 1, matches, 0 );
+
+	if( status == REG_NOMATCH )
+		for( l=cur.l->next; l && status==REG_NOMATCH && l!=cur.l; ){
+			status = regexec( &re, l->c, 1, matches, 0);
+			if( ! status )
+				break;
+
+			if( ! l->next )
+				l = fstart;
+			else
+				l = l->next;
+		}
+
+	regfree(&re);
+
+	if( ! status ){
+		/* match, address is matches[0].rm_so to matches[0].rm_eo */
+		sels = (Filepos){l, matches[0].rm_so};
+		sele = (Filepos){l, matches[0].rm_eo};
+		cur = sels;
+	}
+}
+
+void /* set mark and search backwards using regex in buffer */
+f_searchb(const Arg *arg){
+	f_mark( &(Arg){.c=0} );
+	/* FIXME todo */
 }
 
 /* Movement functions definitions */
@@ -563,6 +611,14 @@ i_setup(void){
 
 void
 i_tidyup(void){
+	Line *l=0, *lb=0;
+	for( l=fstart; l; ){
+		free(l->c);
+		lb = l->next;
+		free(l);
+		l=lb;
+	}
+	free(curfile);
 	t_setstate(&orig);
 	t_clear();
 	f_normal();
@@ -575,6 +631,9 @@ i_drawscr(bool sdirty, int crow, int ccol){
 	Line *l;
 	int n=1, c=0, i=0; /* n is line number, c is the char counter, i is used within the printing loop */
 	bool selected = false;
+
+	if( sels.l)
+		fprintf(stderr, "so %d se %d cur.o %d ss.l->len %d\n", sels.o, sele.o, cur.o, sels.l->len);
 
 	c_line0();
 	for( n=1, l=sstart; l && n<height; l=l->next, ++n ){
