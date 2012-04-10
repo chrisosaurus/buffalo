@@ -54,7 +54,7 @@ static char *curfile; /* current file name */
 static int height=0, width=0; /* height last time we drew */
 static Filepos mark = {0,0}; /* mark in file */
 static bool modified=false; /* has the file been modified since last save or load */
-static Line *buffer; /* current 'copied' buffer */
+static Line *buffer=0; /* current 'copied' buffer */
 
 /** Internal functions **/
 static Filepos i_insert(Filepos pos, const char *buf); /* insert buf at pos and return new filepos after the inserted char */
@@ -310,6 +310,9 @@ f_searchf(const Arg *arg){
 	regmatch_t matches[1];
 	Line *l=cur.l;
 	int status=REG_NOMATCH;
+
+	if( ! buffer->len )
+		return;
 
 	f_mark( &(Arg){.c=0} );
 
