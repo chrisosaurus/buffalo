@@ -597,6 +597,7 @@ i_backspace(Filepos pos){
 	if( ! pos.l )
 		return pos;
 
+    /* FIXME this doesnt seem ideal as we may shrink the selection down to size 0 */
     if( pos.l == sels.l && pos.o == sels.o )
         sels = m_prevchar(sels);
     else if( pos.l == sele.l && pos.o == sele.o )
@@ -914,12 +915,12 @@ main(int argc, char **argv){
 					break;
 				}
 		} else { /* ascii character */
-            if( (!sels.l) || sele.l != cur.l ){
+            if( (!sels.l) || sele.l != cur.l ){ /* FIXME */
                 sele = (Filepos){0, 0};
                 sels = cur;
             }
 			cur = i_insert(cur, ch);
-            if( (! sele.l) || sele.l == cur.l )
+            if( (! sele.l) || sele.l == cur.l ) /* FIXME */
                 sele = cur;
 		}
 

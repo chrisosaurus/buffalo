@@ -3,6 +3,7 @@ codes.* will eventually become its own library, maybe stw (simple termcode wrapp
 
 
 buffalo TODO:
+robust selection and insertion system
 save as
 open(run time specified file, possibly with another already open)
 goto matching bracket (simple 'stack' counter, will fail for non literals but meh)
