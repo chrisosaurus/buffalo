@@ -597,6 +597,11 @@ i_backspace(Filepos pos){
 	if( ! pos.l )
 		return pos;
 
+    if( pos.l == sels.l && pos.o == sels.o )
+        sels = m_prevchar(sels);
+    else if( pos.l == sele.l && pos.o == sele.o )
+        sele = m_prevchar(sele);
+
 	if( pos.o <= 0 ){
 		/* need to move everythin in this line onto the end of the previos */
 		if( ! pos.l->prev ) return pos;
@@ -909,7 +914,13 @@ main(int argc, char **argv){
 					break;
 				}
 		} else { /* ascii character */
+            if( (!sels.l) || sele.l != cur.l ){
+                sele = (Filepos){0, 0};
+                sels = cur;
+            }
 			cur = i_insert(cur, ch);
+            if( (! sele.l) || sele.l == cur.l )
+                sele = cur;
 		}
 
 	}
