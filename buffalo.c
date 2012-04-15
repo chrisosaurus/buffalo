@@ -597,11 +597,13 @@ i_backspace(Filepos pos){
 	if( ! pos.l )
 		return pos;
 
-	/* FIXME this doesnt seem ideal as we may shrink the selection down to size 0 */
-	if( pos.l == sels.l && pos.o == sels.o )
-		sels = m_prevchar(sels);
-	else if( pos.l == sele.l && pos.o == sele.o )
+	if( pos.l == sels.l && pos.o == sels.o ){
+		f_sel(&(Arg){.i=2});/* clear selection */
+	} else if( pos.l == sele.l && pos.o == sele.o ){
 		sele = m_prevchar(sele);
+		if( sele.l == sels.l && sele.o == sels.o )
+			f_sel(&(Arg){.i=2});/* clear selection */
+	}
 
 	if( pos.o <= 0 ){
 		/* need to move everythin in this line onto the end of the previos */
