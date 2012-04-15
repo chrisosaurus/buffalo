@@ -156,7 +156,7 @@ f_sel(const Arg *arg){
 			/* sels < sele, otherwise unset sels */
 			if( ! sels.l )
 				return;
-			/* sels < sele, otherwise unset sele FIXME or should I unset sels as sele is the most recently placed? */
+			/* sels < sele, otherwise unset sele FIXME or should I unset sels, as sele is the most recently placed? */
 			if( sels.l == sele.l && sels.o >= sele.o )
 				sele = (Filepos){0,0};
 			else
@@ -699,7 +699,7 @@ i_drawscr(bool sdirty, int crow, int ccol){
 		if( l->dirty || sdirty ){
 			l->dirty = false;
 			c_clearline();
-			for( c=0, w=0; c<=l->len && w<(width-1); ++c, ++w ){
+			for( c=0, w=0; c<=l->len && w<=width; ++c, ++w ){
 				if( l == sels.l && c == sels.o ){
 					selected = true;
 					b_green();
@@ -723,7 +723,7 @@ i_drawscr(bool sdirty, int crow, int ccol){
 			}
 			if( l == cur.l ){
 				b_blue();
-				for( ; w<(width-1); ++w )
+				for( ; w<=width; ++w )
 					fputc(' ', stdout);
 				if( selected )
 					b_green();
@@ -894,7 +894,7 @@ int /* the magic main function */
 main(int argc, char **argv){
 	int i;
 	int running=1; /* set to false to stop, FIXME make into a naughty global later */
-	char ch[7]; /* 6 is maximum len of utf8, 7th adds a nice \0 FIXME but it this needed? */
+	char ch[7]; /* 6 is maximum len of utf8, 7th adds a nice \0 */
 
 	i_setup();
 
@@ -919,7 +919,7 @@ main(int argc, char **argv){
 					break;
 				}
 		} else { /* ascii character */
-			if( (!sels.l) || sele.l != cur.l ){ /* FIXME */
+			if( (!sels.l) || sele.l != cur.l ){ /* FIXME this deal with highlighting as you type, need to move somewhere later*/
 				sele = (Filepos){0, 0};
 				sels = cur;
 			}
