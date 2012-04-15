@@ -363,11 +363,11 @@ f_searchb(const Arg *arg){
 		i_die("regcomp failed in f_searchf");
 
 	/* FIXME need to search line up to cursor, quite iffy
-	if( cur.o )
-		status= regexec( &re, &(cur.l->c[cur.o+1]), 1, matches, REG_NOTBOL );
-	else
-		status= regexec( &re, &(cur.l->c[cur.o+1]), 1, matches, 0 );
-		*/
+		 if( cur.o )
+		 status= regexec( &re, &(cur.l->c[cur.o+1]), 1, matches, REG_NOTBOL );
+		 else
+		 status= regexec( &re, &(cur.l->c[cur.o+1]), 1, matches, 0 );
+		 */
 
 	if( status == REG_NOMATCH )
 		for( l=(cur.l->prev?cur.l->prev:fend); l && status==REG_NOMATCH && l!=cur.l; ){
@@ -597,11 +597,11 @@ i_backspace(Filepos pos){
 	if( ! pos.l )
 		return pos;
 
-    /* FIXME this doesnt seem ideal as we may shrink the selection down to size 0 */
-    if( pos.l == sels.l && pos.o == sels.o )
-        sels = m_prevchar(sels);
-    else if( pos.l == sele.l && pos.o == sele.o )
-        sele = m_prevchar(sele);
+	/* FIXME this doesnt seem ideal as we may shrink the selection down to size 0 */
+	if( pos.l == sels.l && pos.o == sels.o )
+		sels = m_prevchar(sels);
+	else if( pos.l == sele.l && pos.o == sele.o )
+		sele = m_prevchar(sele);
 
 	if( pos.o <= 0 ){
 		/* need to move everythin in this line onto the end of the previos */
@@ -677,7 +677,7 @@ i_tidyup(void){
 void /* draw all dirty lines on screen or draw all lines if sdirty */
 i_drawscr(bool sdirty, int crow, int ccol){
 	Line *l;
-	int n=1, c=0, i=0; /* n is line number, c is the char counter, i is used within the printing loop */
+	int n=1, c=0, w=0, i=0; /* n is line number, c is the char counter, w is the width counter (as it can differ from c when printing tabs), i is used within the printing loop */
 	bool selected = false;
 
 	if( sels.l)
@@ -697,7 +697,7 @@ i_drawscr(bool sdirty, int crow, int ccol){
 		if( l->dirty || sdirty ){
 			l->dirty = false;
 			c_clearline();
-			for( c=0; c<=l->len && c<(width-1); ++c ){
+			for( c=0, w=0; c<=l->len && w<(width-1); ++c, ++w ){
 				if( l == sels.l && c == sels.o ){
 					selected = true;
 					b_green();
@@ -711,15 +711,17 @@ i_drawscr(bool sdirty, int crow, int ccol){
 				}
 
 
-				if( l->c[c] == '\t' )
+				if( l->c[c] == '\t' ){
 					for( i=0; i<TABSTOP; ++i )
 						fputc(' ', stdout);
+					w += TABSTOP - 1;
+				}
 				else if( l->c[c] != '\0' )
 					fputc(l->c[c], stdout);
 			}
 			if( l == cur.l ){
 				b_blue();
-				for( ; c<(width-1); ++c )
+				for( ; w<(width-1); ++w )
 					fputc(' ', stdout);
 				if( selected )
 					b_green();
@@ -915,13 +917,13 @@ main(int argc, char **argv){
 					break;
 				}
 		} else { /* ascii character */
-            if( (!sels.l) || sele.l != cur.l ){ /* FIXME */
-                sele = (Filepos){0, 0};
-                sels = cur;
-            }
+			if( (!sels.l) || sele.l != cur.l ){ /* FIXME */
+				sele = (Filepos){0, 0};
+				sels = cur;
+			}
 			cur = i_insert(cur, ch);
-            if( (! sele.l) || sele.l == cur.l ) /* FIXME */
-                sele = cur;
+			if( (! sele.l) || sele.l == cur.l ) /* FIXME */
+				sele = cur;
 		}
 
 	}
