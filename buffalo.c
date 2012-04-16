@@ -699,7 +699,7 @@ i_drawscr(bool sdirty, int crow, int ccol){
 		if( l->dirty || sdirty ){
 			l->dirty = false;
 			c_clearline();
-			for( c=0, w=0; c<=l->len && w<=width; ++c, ++w ){
+			for( c=0, w=0; c<=l->len && w<width; ++c, ++w ){
 				if( l == sels.l && c == sels.o ){
 					selected = true;
 					b_green();
@@ -723,7 +723,7 @@ i_drawscr(bool sdirty, int crow, int ccol){
 			}
 			if( l == cur.l ){
 				b_blue();
-				for( ; w<=width; ++w )
+				for( ; w<width; ++w )
 					fputc(' ', stdout);
 				if( selected )
 					b_green();
