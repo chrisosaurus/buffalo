@@ -531,9 +531,9 @@ i_die(char *c){
 Line* /* return new line containing mul * LINESIZE chars */
 i_newline(int mul){
 	Line *l;
-	if( ! (l = (Line *) malloc(sizeof(Line))) ) i_die("failed to malloc in i_newline");
+	if( ! (l = malloc(sizeof *l)) ) i_die("failed to malloc in i_newline");
 	l->mul = mul;
-	if( ! (l->c = (char *) calloc(sizeof(char), LINESIZE * l->mul)) ) i_die("failed to calloc in i_newline");
+	if( ! (l->c = calloc(sizeof(char), LINESIZE * l->mul)) ) i_die("failed to calloc in i_newline");
 	l->c[0] = '\0';
 	l->len = 0;
 	l->dirty = true;
