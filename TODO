@@ -18,3 +18,9 @@ optimisation of drawing when scrolling <- not really a priority
 tidyup:
 i_backspace, should seperate into 2 methods. One is i_backspace which deals with moving selection and then calls i_delete which removes previous char.
 i_insert, should also be 2 funcs. One sets/extends selection and then calls the other, tab and newline should use the former. Reading a new file should use the latter.
+
+regarding selectiong starting before screen, as sstart is always initially fstart, as we move sstart down we can check if we encounter sels, and if so record that sels
+is before the start of the screen.
+
+regarding open/save as, we could make an argument for these being shell features. Bufallo should always be told what file to open on invocation.
+If the user wants to save under a different name, they can C-z, cp, fg, save, and then move the files around.

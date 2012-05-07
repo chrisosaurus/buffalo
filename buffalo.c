@@ -918,7 +918,7 @@ main(int argc, char **argv){
 			cur = i_insert(cur, ch);
 		} else if( ISALT(ch[0]) || ISCTRL(ch[0]) ){
 			for( i=0; i<LENGTH(keys); ++i )
-				if( memcmp( ch, keys[i].c, sizeof(keys[i].c)) == 0 ){
+				if( memcmp( ch, keys[i].c, sizeof keys[i].c) == 0 ){
 					keys[i].f_func( &(keys[i].arg) );
 					break;
 				}
