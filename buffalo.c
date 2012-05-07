@@ -909,22 +909,26 @@ main(int argc, char **argv){
 		} else if( ch[0] == 127 ){
 			cur = i_backspace(cur);
 		} else if( ch[0] == 10 && ch[1] == 0 ){
-			cur = i_insert(cur, ch); /* FIXME \n special case */
+			/* FIXME \n special case */
+			/* FIXME should also extend selection */
+			cur = i_insert(cur, ch);
 		} else if( ch[0] == 9 && ch[1] == 0 ){
-			cur = i_insert(cur, ch); /* FIXME \t special case */
+			/* FIXME \t special case */
+			/* FIXME should also extend selection */
+			cur = i_insert(cur, ch);
 		} else if( ISALT(ch[0]) || ISCTRL(ch[0]) ){
 			for( i=0; i<LENGTH(keys); ++i )
 				if( memcmp( ch, keys[i].c, sizeof(keys[i].c)) == 0 ){
 					keys[i].f_func( &(keys[i].arg) );
 					break;
 				}
-		} else { /* ascii character */
-			if( (!sels.l) || sele.l != cur.l ){ /* FIXME this deal with highlighting as you type, need to move somewhere later*/
+		} else { /* ascii character, hopefully*/
+			if( (!sels.l) || sele.l != cur.l ){ /* FIXME this deals with highlighting as you type, need to tidy up and move somewhere later*/
 				sele = (Filepos){0, 0};
 				sels = cur;
 			}
 			cur = i_insert(cur, ch);
-			if( (! sele.l) || sele.l == cur.l ) /* FIXME */
+			if( (! sele.l) || sele.l == cur.l ) /* FIXME see above */
 				sele = cur;
 		}
 

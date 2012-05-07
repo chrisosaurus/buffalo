@@ -3,13 +3,18 @@ codes.* will eventually become its own library, maybe stw (simple termcode wrapp
 
 
 buffalo TODO:
-deal with text off the right of the screen (wordwrap OR scrool over, later seems easier)
+deal with text off the right of the screen (wordwrap OR scroll over, later seems easier)
 save as
 open(run time specified file, possibly with another already open)
 goto matching bracket (simple 'stack' counter, will fail for non literals but meh)
-synta highlighting
+syntax highlighting
 undo
 
 bugs:
-fix search backwards so it will search cur.l[ 0 : cur.o ]
-highlighting when selection start is before screen and selection end is on screen, doesnt highlight but should
+fix search backwards so it will search cur.l[ 0 : cur.o ] <- need to find a tidy solution
+highlighting when selection start is before screen and selection end is on screen, doesnt highlight but should <- hard to do in current model
+optimisation of drawing when scrolling <- not really a priority
+
+tidyup:
+i_backspace, should seperate into 2 methods. One is i_backspace which deals with moving selection and then calls i_delete which removes previous char.
+i_insert, should also be 2 funcs. One sets/extends selection and then calls the other, tab and newline should use the former. Reading a new file should use the latter.
