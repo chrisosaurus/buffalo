@@ -4,11 +4,14 @@ codes.* will eventually become its own library, maybe stw (simple termcode wrapp
 
 buffalo TODO:
 deal with text off the right of the screen (wordwrap OR scroll over, later seems easier)
-save as
-open(run time specified file, possibly with another already open)
+delete key working
 goto matching bracket (simple 'stack' counter, will fail for non literals but meh)
-syntax highlighting
 undo
+
+buffalo maybe TODO:
+open(run time specified file, possibly with another already open)
+save as
+syntax highlighting
 
 bugs:
 fix search backwards so it will search cur.l[ 0 : cur.o ] <- need to find a tidy solution
@@ -17,6 +20,8 @@ optimisation of drawing when scrolling <- not really a priority
 If you type off the screen (and thus the sele goes off the screen) then everything after becomes selected (as sele is never encountered)
 should be able to set sele before sels, keep wanting to do this
 inserts a single blank line at the end of file on reading, there on subsequent loads, viewing the file in vim doesnt show this.
+when I cut a whole line the \n is left behind, is this wanted?
+tabs currently dont really exist... makefiles need them
 
 tidyup:
 i_backspace, should seperate into 2 methods. One is i_backspace which deals with moving selection and then calls i_delete which removes previous char.
