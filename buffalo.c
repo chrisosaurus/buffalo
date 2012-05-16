@@ -682,8 +682,10 @@ i_drawscr(bool sdirty, int crow, int ccol){
 	int n=1, c=0, w=0, i=0; /* n is line number, c is the char counter, w is the width counter (as it can differ from c when printing tabs), i is used within the printing loop */
 	bool selected = false;
 
+/* FIXME testing purposes only
 	if( sels.l)
 		fprintf(stderr, "so %d se %d cur.o %d ss.l->len %d\n", sels.o, sele.o, cur.o, sels.l->len);
+*/
 
 	c_line0();
 	for( n=1, l=sstart; l && n<height; l=l->next, ++n ){
