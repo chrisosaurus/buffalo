@@ -14,6 +14,9 @@ bugs:
 fix search backwards so it will search cur.l[ 0 : cur.o ] <- need to find a tidy solution
 highlighting when selection start is before screen and selection end is on screen, doesnt highlight but should <- hard to do in current model
 optimisation of drawing when scrolling <- not really a priority
+If you type off the screen (and thus the sele goes off the screen) then everything after becomes selected (as sele is never encountered)
+should be able to set sele before sels, keep wanting to do this
+inserts a single blank line at the end of file on reading, there on subsequent loads, viewing the file in vim doesnt show this.
 
 tidyup:
 i_backspace, should seperate into 2 methods. One is i_backspace which deals with moving selection and then calls i_delete which removes previous char.
