@@ -1,0 +1,3 @@
+moving by screens is jarring, move by half a screen and keep cursor in same relative position (offset from top of screen).
+
+I think this should also apply to searching, so instead of search going to the line it brings the line to the cursor

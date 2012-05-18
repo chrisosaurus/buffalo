@@ -495,9 +495,15 @@ m_nextscreen(Filepos pos){
 	int i=0;
 	if( ! pos.l )
 		return pos;
-	for( i=0; i<height && pos.l->next; ++i, pos.l=pos.l->next ) ;
+	for( i=0; i<height/2; ++i ){
+		if( !sstart->next || !pos.l->next )
+			break;
+		pos.l = pos.l->next;
+		sstart = sstart->next;
+	}
 	if( pos.o > pos.l->len )
 		pos.o = pos.l->len;
+	height = 0; /* mark screen as dirty */
 	return pos;
 }
 
@@ -506,9 +512,15 @@ m_prevscreen(Filepos pos){
 	int i=0;
 	if( ! pos.l )
 		return pos;
-	for( i=0; i<height && pos.l->prev; ++i, pos.l=pos.l->prev ) ;
+	for( i=0; i<height/2; ++i ){
+		if( !sstart->prev || !pos.l->prev )
+			break;
+		pos.l = pos.l->prev;
+		sstart = sstart->prev;
+	}
 	if( pos.o > pos.l->len )
 		pos.o = pos.l->len;
+	height = 0; /* mark screen as dirty */
 	return pos;
 }
 
@@ -897,6 +909,7 @@ main(int argc, char **argv){
 	int i;
 	int running=1; /* set to false to stop, FIXME make into a naughty global later */
 	char ch[7]; /* 6 is maximum len of utf8, 7th adds a nice \0 */
+	int alt=0; /* if esc was pressed then next character is treated is alt-key, corrects for faulty keyboards sending stray alt */
 
 	i_setup();
 
@@ -906,6 +919,18 @@ main(int argc, char **argv){
 	while( running ){
 		i_draw();
 		t_read(ch, 7);
+		if( ch[0] == 27 && ch[1] == 0 ){
+			/* either esc pressed or stray alt, treat next key as alt-key */
+			alt = 1;
+			continue;
+		}
+		if( alt ){
+			/* alt mode, need to insert alt */
+			alt = 0;
+			memmove( &ch[1], ch, 6 );
+			ch[0] = 27;
+		}
+
 		if( i_utf8len(ch) > 1 ){
 			cur = i_insert(cur, ch);
 		} else if( ch[0] == 127 ){
