@@ -935,29 +935,22 @@ main(int argc, char **argv){
 			cur = i_insert(cur, ch);
 		} else if( ch[0] == 127 ){
 			cur = i_backspace(cur);
-		} else if( ch[0] == 10 && ch[1] == 0 ){
-			/* FIXME \n special case */
-			/* FIXME should also extend selection */
-			cur = i_insert(cur, ch);
-		} else if( ch[0] == 9 && ch[1] == 0 ){
-			/* FIXME \t special case */
-			/* FIXME should also extend selection */
-			cur = i_insert(cur, ch);
 		} else if( ISALT(ch[0]) || ISCTRL(ch[0]) ){
 			for( i=0; i<LENGTH(keys); ++i )
 				if( memcmp( ch, keys[i].c, sizeof keys[i].c) == 0 ){
 					keys[i].f_func( &(keys[i].arg) );
 					break;
 				}
-		} else { /* ascii character, hopefully*/
-			if( (!sels.l) || sele.l != cur.l ){ /* FIXME this deals with highlighting as you type, need to tidy up and move somewhere later*/
-				sele = (Filepos){0, 0};
-				sels = cur;
-			}
-			cur = i_insert(cur, ch);
-			if( (! sele.l) || sele.l == cur.l ) /* FIXME see above */
-				sele = cur;
+			if( i != LENGTH(keys) )
+				continue; /* we have caught this, continue on. This allows us to avoid a bunch of special cases coming before this */
 		}
+		if( (!sels.l) || sele.l != cur.l ){ /* FIXME this deals with highlighting as you type, need to tidy up and move somewhere later*/
+			sele = (Filepos){0, 0};
+			sels = cur;
+		}
+		cur = i_insert(cur, ch);
+		if( (! sele.l) || sele.l == cur.l ) /* FIXME see above */
+			sele = cur;
 
 	}
 	i_tidyup();
