@@ -13,6 +13,7 @@ buffalo maybe TODO:
 open(run time specified file, possibly with another already open)
 save as
 syntax highlighting
+consider 'porting' to a gui (text area with selections, mouse and keyboard controls, etc.)
 
 bugs:
 fix search backwards so it will search cur.l[ 0 : cur.o ] <- need to find a tidy solution
@@ -26,6 +27,8 @@ tabs currently dont really exist... makefiles need them
 moving by whitespace should include start and end of line(as its really moving by WORD not just whitespace)
 word wrap is needed for writing prose rather than code
 backspace doesnt appear to free if it deletes a line...
+opening buffalo without specifying a file has 'weird' behavior
+should buffalo provide any feedback to the user regarding current file, modified state, writing, etc.
 
 tidyup:
 i_backspace, should seperate into 2 methods. One is i_backspace which deals with moving selection and then calls i_delete which removes previous char.

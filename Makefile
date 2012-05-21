@@ -58,3 +58,4 @@ uninstall:
 	@rm -f ${DESTDIR}${MANPREFIX}/man1/buffalo.1
 
 .PHONY: all options clean dist install uninstall
+.POSIX
