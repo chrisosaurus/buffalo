@@ -7,6 +7,7 @@ deal with text off the right of the screen (wordwrap OR scroll over, later seems
 delete key working
 goto matching bracket (simple 'stack' counter, will fail for non literals but meh)
 undo
+sele placeable before sels (as in, before sels is placed not preceeding), highlight maybe red
 
 buffalo maybe TODO:
 open(run time specified file, possibly with another already open)
