@@ -23,6 +23,8 @@ should be able to set sele before sels, keep wanting to do this
 inserts a single blank line at the end of file on reading, there on subsequent loads, viewing the file in vim doesnt show this.
 when I cut a whole line the \n is left behind, is this wanted?
 tabs currently dont really exist... makefiles need them
+moving by whitespace should include start and end of line(as its really moving by WORD not just whitespace)
+word wrap is needed for writing prose rather than code
 
 tidyup:
 i_backspace, should seperate into 2 methods. One is i_backspace which deals with moving selection and then calls i_delete which removes previous char.
