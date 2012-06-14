@@ -16,6 +16,7 @@ syntax highlighting
 consider 'porting' to a gui (text area with selections, mouse and keyboard controls, etc.)
 
 bugs:
+selection green and white requires better contrast (sandy uses black text on yellow)
 fix search backwards so it will search cur.l[ 0 : cur.o ] <- need to find a tidy solution
 highlighting when selection start is before screen and selection end is on screen, doesnt highlight but should <- hard to do in current model
 optimisation of drawing when scrolling <- not really a priority
