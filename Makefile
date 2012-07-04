@@ -1,6 +1,8 @@
 # buffalo - buffalo buffalo buffalo buffalo buffalo buffalo buffalo
 # See LICENSE file for copyright and license details.
 
+.POSIX:
+
 include config.mk
 
 SRC = buffalo.c codes.c
@@ -58,4 +60,3 @@ uninstall:
 	@rm -f ${DESTDIR}${MANPREFIX}/man1/buffalo.1
 
 .PHONY: all options clean dist install uninstall
-.POSIX

@@ -156,13 +156,13 @@ f_sel(const Arg *arg){
 			/* sels < sele, otherwise unset sels */
 			if( ! sels.l )
 				return;
-			/* sels < sele, otherwise unset sele FIXME or should I unset sels, as sele is the most recently placed? */
+			/* sels < sele, otherwise unset sels (sele is more recent) */
 			if( sels.l == sele.l && sels.o >= sele.o )
-				sele = (Filepos){0,0};
+				sels = (Filepos){0,0};
 			else
 				for( l=sels.l; l!=sele.l; l=l->next )
 					if( l == fend ){
-						sele = (Filepos){0, 0};
+						sels = (Filepos){0, 0};
 						break;
 					}
 			break;
@@ -911,10 +911,14 @@ main(int argc, char **argv){
 	char ch[7]; /* 6 is maximum len of utf8, 7th adds a nice \0 */
 	int alt=0; /* if esc was pressed then next character is treated is alt-key, corrects for faulty keyboards sending stray alt */
 
-	i_setup();
 
-	if( argc > 1 )
-		i_loadfile(argv[1]);
+	if( argc < 2 ){
+       puts("No file supplied");
+       return 1;
+    }
+
+	i_setup();
+	i_loadfile(argv[1]);
 
 	while( running ){
 		i_draw();

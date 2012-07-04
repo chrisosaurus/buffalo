@@ -1,3 +1,4 @@
 Dev Notes:
 cur.o <= cur.l->len (as cur.l->c[cur.l->len] == \0)
 try to minimise writing of global variables, feel free to read them however (f_ functions CAN write globals)
+the lines do not contain the \n character, I think they should. This will allow next/prev word to land on it, to copy and paste \n AND for the additional EOF \n to bugger off.

@@ -16,20 +16,20 @@ syntax highlighting
 consider 'porting' to a gui (text area with selections, mouse and keyboard controls, etc.)
 
 bugs:
-editing buffalo in buffalo = trouble, need to NOT interpret literal chars (ie colours)
+moving by whitespace should include start and end of line(as its really moving by WORD not just whitespace)
+when I cut a whole line the \n is left behind, is this wanted?
+inserts a single blank line at the end of file on reading, there on subsequent loads, viewing the file in vim doesnt show this.
+backspace doesnt appear to free if it deletes a line...
 selection green and white requires better contrast (sandy uses black text on yellow)
+indicate sele if no sels is placed
+
+editing buffalo in buffalo = trouble, need to NOT interpret literal chars (ie colours)
 fix search backwards so it will search cur.l[ 0 : cur.o ] <- need to find a tidy solution
 highlighting when selection start is before screen and selection end is on screen, doesnt highlight but should <- hard to do in current model
 optimisation of drawing when scrolling <- not really a priority
 If you type off the screen (and thus the sele goes off the screen) then everything after becomes selected (as sele is never encountered)
-should be able to set sele before sels, keep wanting to do this
-inserts a single blank line at the end of file on reading, there on subsequent loads, viewing the file in vim doesnt show this.
-when I cut a whole line the \n is left behind, is this wanted?
 tabs currently dont really exist... makefiles need them
-moving by whitespace should include start and end of line(as its really moving by WORD not just whitespace)
 word wrap is needed for writing prose rather than code
-backspace doesnt appear to free if it deletes a line...
-opening buffalo without specifying a file has 'weird' behavior
 should buffalo provide any feedback to the user regarding current file, modified state, writing, etc.
 probably need a status line indicating which file we have open, if we have unsaved changes, maybe the buffer, file modes (read/write/etc.) and if the file has changed on disk
 
