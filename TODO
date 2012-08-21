@@ -3,6 +3,7 @@ codes.* will eventually become its own library, maybe stw (simple termcode wrapp
 
 
 buffalo TODO:
+spawn command (see tabbed, dmenu or dwm spawn)
 deal with text off the right of the screen (wordwrap OR scroll over, later seems easier)
 delete key working
 goto matching bracket (simple 'stack' counter, will fail for non literals but meh)
