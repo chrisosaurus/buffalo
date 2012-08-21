@@ -478,7 +478,16 @@ Filepos /* move cursor to next space */
 m_prevword(Filepos pos){
 	if( ! pos.l )
 		return pos;
-	for( pos = m_prevchar(pos); pos.l->c[pos.o] != ' '; pos = m_prevchar(pos));
+	for( pos = m_prevchar(pos); ; pos = m_prevchar(pos)){
+		if( pos.l->c[pos.o] == ' ' )
+			break;
+		if( pos.l->c[pos.o] == '\n' )
+			break;
+		if( pos.o == pos.l->len )
+			break;
+		if( pos.o == 0 )
+			break;
+	}
 	return pos;
 }
 
@@ -486,7 +495,16 @@ Filepos /* move cursor to next space */
 m_nextword(Filepos pos){
 	if( ! pos.l )
 		return pos;
-	for( pos = m_nextchar(pos); pos.l->c[pos.o] != ' '; pos = m_nextchar(pos));
+	for( pos = m_nextchar(pos); ; pos = m_nextchar(pos)){
+		if( pos.l->c[pos.o] == ' ' )
+			break;
+		if( pos.l->c[pos.o] == '\n' )
+			break;
+		if( pos.o == pos.l->len )
+			break;
+		if( pos.o == 0 )
+			break;
+	}
 	return pos;
 }
 

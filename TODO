@@ -16,7 +16,6 @@ syntax highlighting
 consider 'porting' to a gui (text area with selections, mouse and keyboard controls, etc.)
 
 bugs:
-moving by whitespace should include start and end of line(as its really moving by WORD not just whitespace)
 when I cut a whole line the \n is left behind, is this wanted?
 inserts a single blank line at the end of file on reading, there on subsequent loads, viewing the file in vim doesnt show this.
 backspace doesnt appear to free if it deletes a line...
